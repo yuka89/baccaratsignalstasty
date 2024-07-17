@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaccaratSignals Testy App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .container {
+            text-align: center;
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 400px;
+        }
+        .sidebar {
+            background-color: #333;
+            width: 90%;
+            padding: 20px;
+            overflow-y: auto;
+            height: auto;
+            box-shadow: -2px 0 5px rgba(255,255,255,0.1);
+            margin-top: 20px;
+        }
+        h1, p, label {
+            color: #fff;
+            margin: 10px 0;
+        }
+        input[type="number"], button, select {
+            padding: 8px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            color: #000;
+        }
+        .player-button, .banker-button, .player-track-button, .banker-track-button {
+            background-color: #ffff00;
+            color: black;
+        }
+        .player-button.active, .banker-button.active, .player-track-button.active, .banker-track-button.active {
+            background-color: #cccc00;
+            color: black;
+            border: 2px solid #0044cc;
+        }
+        .win-button, .lose-button {
+            margin-top: 5px;
+            width: 48%;
+        }
+        .win-button {
+            background-color: #28a745;
+            color: white;
+        }
+        .lose-button {
+            background-color: #dc3545;
+            color: white;
+        }
+        .reset-button {
+            background-color: #f44336;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .modal, .modal-banker, .modal-lose, .modal-banker-2, .modal-player-2 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+        .modal-content, .modal-banker-content, .modal-lose-content, .modal-banker-2-content, .modal-player-2-content {
+            background-color: #dc3545;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 90%;
+            max-width: 300px;
+        }
+        .game-log {
+            font-size: 14px;
+            color: blue;
+            text-align: left;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .highlight-message {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: blue;
+        }
+        @media (min-width: 600px) {
+            .container {
+                width: 50%;
+            }
+            .sidebar {
+                width: 20%;
+                height: 90vh;
+                position: fixed;
+                right: 0;
+                top: 5vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="appContainer">
+        <h1>BaccaratSignals Testy App</h1>
+        <label for="unitInput">Choose units (1-1000):</label>
+        <input type="number" id="unitInput" min="1" max="1000" value="1" onchange="setUnits()">
+        <p class="unit-info">(Each unit = $1)</p>
+        <p>Bet Amount: $<span id="betAmount">1.00</span></p>
+        <div class="highlight-message" id="highlightMessage">Please select Player or Banker to bet.</div>
+        <button class="player-button" id="playerButton" onclick="toggleHighlight('player')">Player</button>
+        <button class="banker-button" id="bankerButton" onclick="toggleHighlight('banker')">Banker</button>
+        <button class="win-button" id="winButton" onclick="processResult('win')">Win</button>
+        <button class="lose-button" id="loseButton" onclick="processResult('lose')">Lose</button>
+        <button class="reset-button" onclick="resetGame()">Reset</button>
+        <p>Total Wins: $<span id="totalWins">0.00</span></p>
+        <p id="winLossCounter">Wins/Losses: 0</p>
+        <div id="statsTab">
+            <h2>Win/Loss Statistics</h2>
+            <p>Win Percentage: <span id="winPercentage">0%</span></p>
+            <p>Loss Percentage: <span id="lossPercentage">0%</span></p>
+            <label for="selectedSystem">Selected System:</label>
+            <select id="selectedSystem">
+                <option value="none">None</option>
+                <option value="bet4yourlife">bet4yourlife</option>
+            </select>
+        </div>
+        <p id="errorMessage" class="error-message"></p>
+        <div class="sidebar">
+            <h2>Game Logs</h2>
+            <button class="player-track-button" id="trackPlayerButton" onclick="trackResult('Player')">Player</button>
+            <button class="banker-track-button" id="trackBankerButton" onclick="trackResult('Banker')">Banker</button>
+            <div id="gameTrackLog"></div>
+            <div id="gameLog"></div>
+        </div>
+        <!-- Modals -->
+        <div class="modal" id="leaveModal">
+            <div class="modal-content">
+                <p>Leave the table now!</p>
+                <button onclick="closeModal('leaveModal')">Close</button>
+            </div>
+        </div>
+        <div class="modal-banker" id="bankerHighlightModal">
+            <div class="modal-banker-content">
+                <p>Highlight Banker and Bet Banker</p>
+                <button onclick="closeModal('bankerHighlightModal')">Close</button>
+            </div>
+        </div>
+        <div class="modal-lose" id="loseModal">
+            <div class="modal-lose-content">
+                <p id="loseMessage">Highlight the winning side and bet on it</p>
+                <button onclick="closeModal('loseModal')">Close</button>
+            </div>
+        </div>
+        <div class="modal-banker-2" id="banker2Modal">
+            <div class="modal-banker-2-content">
+                <p>Bet on Banker</p>
+                <button onclick="closeModal('banker2Modal')">Close</button>
+            </div>
+        </div>
+        <div class="modal-player-2" id="player2Modal">
+            <div class="modal-player-2-content">
+                <p>Bet on Player</p>
+                <button onclick="closeModal('player2Modal')">Close</button>
+            </div>
+        </div>
+        <div class="modal" id="playerBankerModal">
+            <div class="modal-content">
+                <p>Bet on Banker</p>
+                <button onclick="closeModal('playerBankerModal')">Close</button>
+            </div>
+        </div>
+        <div class="modal" id="bankerPlayerModal">
+            <div class="modal-content">
+                <p>Bet on Player</p>
+                <button onclick="closeModal('bankerPlayerModal')">Close</button>
+            </div>
+        </div>
+        <div class="modal" id="switchingModal">
+            <div class="modal-content">
+                <p>Switching to the other side!</p>
+                <button onclick="closeModal('switchingModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentBet = parseFloat(document.getElementById('unitInput').value);
+        let initialBet = currentBet;
+        let totalWins = 0;
+        let totalGames = 0;
+        let winLossCounter = 0;
+        let lastAction = '';
+        let loseStreak = 0;
+
+        function updateDisplay() {
+            document.getElementById('betAmount').textContent = currentBet.toFixed(2);
+            document.getElementById('totalWins').textContent = totalWins.toFixed(2);
+            document.getElementById('winPercentage').textContent = totalGames > 0 ? ((winLossCounter / totalGames) * 100).toFixed(2) + '%' : '0%';
+            document.getElementById('lossPercentage').textContent = totalGames > 0 ? (((totalGames - winLossCounter) / totalGames) * 100).toFixed(2) + '%' : '0%';
+            document.getElementById('winLossCounter').textContent = 'Wins/Losses: ' + winLossCounter;
+        }
+
+        function toggleHighlight(button) {
+            const playerButton = document.getElementById('playerButton');
+            const bankerButton = document.getElementById('bankerButton');
+
+            playerButton.classList.remove('active');
+            bankerButton.classList.remove('active');
+
+            if (button === 'player') {
+                playerButton.classList.add('active');
+                document.getElementById('highlightMessage').textContent = 'Bet on Player';
+            } else if (button === 'banker') {
+                bankerButton.classList.add('active');
+                document.getElementById('highlightMessage').textContent = 'Bet on Banker';
+            }
+
+            document.getElementById('errorMessage').textContent = '';
+        }
+
+        function processResult(action) {
+            let bet = parseFloat(document.getElementById('unitInput').value);
+            let isPlayerActive = document.getElementById('playerButton').classList.contains('active');
+            let isBankerActive = document.getElementById('bankerButton').classList.contains('active');
+
+            if (!isPlayerActive && !isBankerActive) {
+                document.getElementById('errorMessage').textContent = 'Please select Player or Banker before proceeding.';
+                return;
+            }
+
+            totalGames++;
+
+            if (action === 'win') {
+                if (isPlayerActive) {
+                    totalWins += bet;
+                    winLossCounter++;
+                    lastAction = 'Player';
+                } else if (isBankerActive) {
+                    let winnings = bet * 0.95;
+                    totalWins += winnings;
+                    winLossCounter++;
+                    lastAction = 'Banker';
+                }
+                loseStreak = 0;
+                addGameToLog((isPlayerActive ? 'Player' : 'Banker') + ' Wins', totalGames);
+
+                if (currentBet > initialBet) {
+                    currentBet--;
+                    document.getElementById('unitInput').value = currentBet;
+                }
+
+                if (winLossCounter % 3 === 0 && winLossCounter !== 0) {
+                    showModal('leaveModal');
+                }
+            } else if (action === 'lose') {
+                totalWins -= bet;
+                winLossCounter--;
+                addGameToLog((isPlayerActive ? 'Player' : 'Banker') + ' Loses', totalGames);
+
+                currentBet++;
+                document.getElementById('unitInput').value = currentBet;
+
+                const selectedSystem = document.getElementById('selectedSystem').value;
+                loseStreak++;
+                if (loseStreak >= 2 && selectedSystem === 'bet4yourlife') {
+                    showModal('switchingModal');
+                    toggleHighlight(isPlayerActive ? 'banker' : 'player');
+                    loseStreak = 0;
+                } else if (selectedSystem === 'bet4yourlife') {
+                    showModal('loseModal');
+                }
+
+                lastAction = isPlayerActive ? 'Player' : 'Banker';
+            }
+            updateDisplay();
+        }
+
+        function addGameToLog(result, number) {
+            const log = document.getElementById('gameLog');
+            const entry = document.createElement('p');
+            entry.className = 'game-log';
+            entry.textContent = number + '. ' + result;
+            log.appendChild(entry);
+        }
+
+        function addGameToTrackLog(result) {
+            const log = document.getElementById('gameTrackLog');
+            const entry = document.createElement('p');
+            entry.className = 'game-log';
+            entry.textContent = result;
+            log.appendChild(entry);
+
+            const selectedSystem = document.getElementById('selectedSystem').value;
+            if (selectedSystem === 'bet4yourlife') {
+                checkSequence(result);
+            }
+        }
+
+        function checkSequence(action) {
+            const selectedSystem = document.getElementById('selectedSystem').value;
+            if (selectedSystem === 'bet4yourlife') {
+                if (lastAction === 'Banker' && action === 'Banker') {
+                    showModal('banker2Modal');
+                } else if (lastAction === 'Player' && action === 'Player') {
+                    showModal('player2Modal');
+                } else if (lastAction === 'Player' && action === 'Banker') {
+                    showModal('playerBankerModal');
+                } else if (lastAction === 'Banker' && action === 'Player') {
+                    showModal('bankerPlayerModal');
+                }
+            }
+            lastAction = action;
+        }
+
+        function trackResult(outcome) {
+            addGameToTrackLog(outcome);
+        }
+
+        function resetGame() {
+            totalWins = 0;
+            totalGames = 0;
+            winLossCounter = 0;
+            lastAction = '';
+            loseStreak = 0;
+            currentBet = initialBet;
+            document.getElementById('unitInput').value = currentBet;
+            updateDisplay();
+            document.getElementById('playerButton').classList.remove('active');
+            document.getElementById('bankerButton').classList.remove('active');
+            document.getElementById('highlightMessage').textContent = 'Please select Player or Banker to bet.';
+            document.getElementById('gameLog').innerHTML = '';
+            document.getElementById('gameTrackLog').innerHTML = '';
+            document.getElementById('errorMessage').textContent = '';
+            closeModal('leaveModal');
+            closeModal('banker2Modal');
+            closeModal('player2Modal');
+            closeModal('playerBankerModal');
+            closeModal('bankerPlayerModal');
+            closeModal('loseModal');
+            closeModal('switchingModal');
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function setUnits() {
+            currentBet = parseFloat(document.getElementById('unitInput').value);
+            initialBet = currentBet;
+            updateDisplay();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
