@@ -60,10 +60,10 @@ function initializeSpreadsheet() {
     
     const tradesHeaders = tradesSheet.getRange(1, 1, 1, tradesSheet.getLastColumn()).getValues()[0];
     if (tradesHeaders.length === 0 || tradesHeaders[0] === '') {
-      tradesSheet.getRange(1, 1, 1, 12).setValues([[
+      tradesSheet.getRange(1, 1, 1, 13).setValues([[
         'Timestamp', 'Symbol', 'Trade Type', 'Entry Price', 'Exit Price', 
-        'Quantity', 'Result', 'Profit/Loss', 'Trade Notes', 'Chart Image ID', 
-        'Emotion Score', 'Confidence Level'
+        'Contracts', 'Result', 'Profit/Loss', 'Current Balance', 'Trade Notes', 
+        'Chart Image ID', 'Emotion Score', 'Confidence Level'
       ]]);
     }
     
@@ -87,10 +87,12 @@ function getEmotionsSheet() {
  */
 function recordEmotionalState(data) {
   try {
+    Logger.log('Recording emotional state: ' + JSON.stringify(data));
+    
     const sheet = getEmotionsSheet();
     const timestamp = new Date();
     
-    sheet.appendRow([
+    const rowData = [
       timestamp,
       data.emotionScore || 5,
       data.marketAction || 'Hold',
@@ -99,11 +101,18 @@ function recordEmotionalState(data) {
       data.greedLevel || 5,
       data.notes || '',
       data.reflection || ''
-    ]);
+    ];
+    
+    Logger.log('Appending row data: ' + JSON.stringify(rowData));
+    
+    sheet.appendRow(rowData);
+    
+    Logger.log('Emotional state recorded successfully');
     
     return { success: true, message: 'Emotional state recorded successfully' };
   } catch (error) {
     Logger.log('Error recording emotional state: ' + error.toString());
+    Logger.log('Error stack: ' + error.stack);
     return { success: false, message: error.toString() };
   }
 }
@@ -113,20 +122,25 @@ function recordEmotionalState(data) {
  */
 function recordTrade(tradeData) {
   try {
+    Logger.log('Recording trade data: ' + JSON.stringify(tradeData));
+    
     const sheets = initializeSpreadsheet();
     const sheet = sheets.trades;
     
-    // Calculate profit/loss
+    // Calculate profit/loss based on futures contract specifications
     let profitLoss = 0;
     if (tradeData.entryPrice && tradeData.exitPrice && tradeData.quantity) {
       const entryPrice = parseFloat(tradeData.entryPrice);
       const exitPrice = parseFloat(tradeData.exitPrice);
       const quantity = parseFloat(tradeData.quantity);
       
+      // Get point value for different futures contracts
+      const pointValue = getContractPointValue(tradeData.symbol);
+      
       if (tradeData.tradeType === 'Long') {
-        profitLoss = (exitPrice - entryPrice) * quantity;
+        profitLoss = (exitPrice - entryPrice) * quantity * pointValue;
       } else {
-        profitLoss = (entryPrice - exitPrice) * quantity;
+        profitLoss = (entryPrice - exitPrice) * quantity * pointValue;
       }
     }
     
@@ -136,14 +150,17 @@ function recordTrade(tradeData) {
       tradeData.tradeType || 'Long',
       tradeData.entryPrice || '',
       tradeData.exitPrice || '',
-      tradeData.quantity || '',
+      tradeData.quantity || 1,
       tradeData.result || 'Win',
       profitLoss.toFixed(2),
+      tradeData.currentBalance || '',
       tradeData.tradeNotes || '',
       '', // Chart Image ID - removed
       tradeData.emotionScore || 5,
       tradeData.confidenceLevel || 5
     ]);
+    
+    Logger.log('Trade recorded successfully');
     
     return { 
       success: true, 
@@ -157,24 +174,105 @@ function recordTrade(tradeData) {
 }
 
 /**
+ * Get point value for different futures contracts
+ */
+function getContractPointValue(symbol) {
+  const pointValues = {
+    // Stock Index Futures
+    'ES': 50,      // E-mini S&P 500
+    'MES': 5,      // Micro E-mini S&P 500
+    'NQ': 20,      // E-mini NASDAQ 100
+    'MNQ': 2,      // Micro E-mini NASDAQ 100
+    'YM': 5,       // E-mini Dow Jones
+    'MYM': 0.5,    // Micro E-mini Dow Jones
+    'RTY': 50,     // E-mini Russell 2000
+    'M2K': 5,      // Micro E-mini Russell 2000
+    
+    // Energy Futures
+    'CL': 1000,    // Crude Oil (1000 barrels)
+    'MCL': 100,    // Micro Crude Oil
+    'NG': 10000,   // Natural Gas (10,000 MMBtu)
+    'RB': 42000,   // Gasoline (42,000 gallons)
+    'HO': 42000,   // Heating Oil (42,000 gallons)
+    
+    // Metal Futures
+    'GC': 100,     // Gold (100 troy ounces)
+    'MGC': 10,     // Micro Gold
+    'SI': 5000,    // Silver (5,000 troy ounces)
+    'SIL': 1000,   // Micro Silver
+    'HG': 25000,   // Copper (25,000 pounds)
+    'PA': 100,     // Palladium
+    'PL': 50,      // Platinum
+    
+    // Currency Futures
+    '6E': 125000,  // Euro FX
+    'M6E': 12500,  // Micro Euro FX
+    '6B': 62500,   // British Pound
+    'M6B': 6250,   // Micro British Pound
+    '6J': 12500000, // Japanese Yen
+    '6A': 100000,  // Australian Dollar
+    '6C': 100000,  // Canadian Dollar
+    '6S': 125000,  // Swiss Franc
+    
+    // Agricultural Futures
+    'ZC': 50,      // Corn (5,000 bushels, $0.01 = $50)
+    'ZS': 50,      // Soybeans (5,000 bushels, $0.01 = $50)
+    'ZW': 50,      // Wheat (5,000 bushels, $0.01 = $50)
+    'LE': 400,     // Live Cattle (40,000 pounds, $0.01 = $400)
+    'HE': 400,     // Lean Hogs (40,000 pounds, $0.01 = $400)
+    'CC': 10,      // Cocoa
+    'KC': 375,     // Coffee
+    'SB': 1120,    // Sugar
+    'CT': 500,     // Cotton
+    
+    // Bond Futures
+    'ZB': 1000,    // 30-Year T-Bond
+    'ZN': 1000,    // 10-Year T-Note
+    'ZF': 1000,    // 5-Year T-Note
+    'ZT': 2000     // 2-Year T-Note
+  };
+  
+  return pointValues[symbol] || 1; // Default to 1 if symbol not found
+}
+
+/**
  * Get trade performance data
  */
 function getTradePerformance(days = 30) {
   try {
+    Logger.log('Getting trade performance data for last ' + days + ' days');
+    
     const sheets = initializeSpreadsheet();
     const sheet = sheets.trades;
+    
+    // Check if sheet has data
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      Logger.log('No trade data found');
+      return { trades: [], performance: null };
+    }
+    
     const data = sheet.getDataRange().getValues();
     
-    if (data.length <= 1) return { trades: [], performance: null };
+    if (data.length <= 1) {
+      Logger.log('No trade data rows found');
+      return { trades: [], performance: null };
+    }
     
     const headers = data[0];
     const rows = data.slice(1);
+    
+    Logger.log('Found ' + rows.length + ' trade rows');
+    Logger.log('Headers: ' + JSON.stringify(headers));
     
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     
     const recentTrades = rows
-      .filter(row => new Date(row[0]) >= cutoffDate)
+      .filter(row => {
+        const tradeDate = new Date(row[0]);
+        return tradeDate >= cutoffDate;
+      })
       .map(row => {
         const obj = {};
         headers.forEach((header, index) => {
@@ -182,6 +280,8 @@ function getTradePerformance(days = 30) {
         });
         return obj;
       });
+    
+    Logger.log('Found ' + recentTrades.length + ' recent trades');
     
     // Calculate performance metrics
     const wins = recentTrades.filter(trade => trade.Result === 'Win').length;
@@ -190,26 +290,32 @@ function getTradePerformance(days = 30) {
     const winRate = totalTrades > 0 ? (wins / totalTrades * 100).toFixed(1) : 0;
     
     const totalPnL = recentTrades.reduce((sum, trade) => {
-      return sum + (parseFloat(trade['Profit/Loss']) || 0);
+      const pnl = parseFloat(trade['Profit/Loss']) || 0;
+      return sum + pnl;
     }, 0);
     
     const avgEmotionScore = recentTrades.length > 0 ? 
-      recentTrades.reduce((sum, trade) => sum + (trade['Emotion Score'] || 5), 0) / recentTrades.length : 5;
+      recentTrades.reduce((sum, trade) => sum + (parseFloat(trade['Emotion Score']) || 5), 0) / recentTrades.length : 5;
+    
+    const performance = {
+      totalTrades,
+      wins,
+      losses,
+      winRate,
+      totalPnL: totalPnL.toFixed(2),
+      avgEmotionScore: avgEmotionScore.toFixed(1)
+    };
+    
+    Logger.log('Performance calculated: ' + JSON.stringify(performance));
     
     return {
       trades: recentTrades,
-      performance: {
-        totalTrades,
-        wins,
-        losses,
-        winRate,
-        totalPnL: totalPnL.toFixed(2),
-        avgEmotionScore: avgEmotionScore.toFixed(1)
-      }
+      performance: performance
     };
   } catch (error) {
     Logger.log('Error getting trade performance: ' + error.toString());
-    return { trades: [], performance: null };
+    Logger.log('Error stack: ' + error.stack);
+    return { trades: [], performance: null, error: error.toString() };
   }
 }
 
@@ -218,19 +324,38 @@ function getTradePerformance(days = 30) {
  */
 function getRecentEmotionalData(days = 30) {
   try {
+    Logger.log('Getting recent emotional data for last ' + days + ' days');
+    
     const sheet = getEmotionsSheet();
+    
+    // Check if sheet has data
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      Logger.log('No emotional data found in sheet');
+      return [];
+    }
+    
     const data = sheet.getDataRange().getValues();
     
-    if (data.length <= 1) return [];
+    if (data.length <= 1) {
+      Logger.log('No emotional data rows found');
+      return [];
+    }
     
     const headers = data[0];
     const rows = data.slice(1);
+    
+    Logger.log('Found ' + rows.length + ' emotional data rows');
+    Logger.log('Emotional headers: ' + JSON.stringify(headers));
     
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     
     const recentData = rows
-      .filter(row => new Date(row[0]) >= cutoffDate)
+      .filter(row => {
+        const dataDate = new Date(row[0]);
+        return dataDate >= cutoffDate;
+      })
       .map(row => {
         const obj = {};
         headers.forEach((header, index) => {
@@ -239,9 +364,12 @@ function getRecentEmotionalData(days = 30) {
         return obj;
       });
     
+    Logger.log('Found ' + recentData.length + ' recent emotional entries');
+    
     return recentData;
   } catch (error) {
     Logger.log('Error getting emotional data: ' + error.toString());
+    Logger.log('Error stack: ' + error.stack);
     return [];
   }
 }
@@ -251,9 +379,14 @@ function getRecentEmotionalData(days = 30) {
  */
 function analyzeEmotionalPatterns() {
   try {
+    Logger.log('Starting emotional pattern analysis');
+    
     const data = getRecentEmotionalData(30);
     
+    Logger.log('Got ' + data.length + ' emotional data points');
+    
     if (data.length === 0) {
+      Logger.log('No emotional data found, returning default values');
       return {
         avgEmotionScore: 5,
         avgFearLevel: 5,
@@ -265,13 +398,15 @@ function analyzeEmotionalPatterns() {
     }
     
     const analysis = {
-      avgEmotionScore: data.reduce((sum, item) => sum + (item['Emotion Score'] || 5), 0) / data.length,
-      avgFearLevel: data.reduce((sum, item) => sum + (item['Fear Level'] || 5), 0) / data.length,
-      avgGreedLevel: data.reduce((sum, item) => sum + (item['Greed Level'] || 5), 0) / data.length,
-      avgConfidence: data.reduce((sum, item) => sum + (item['Confidence Level'] || 5), 0) / data.length,
+      avgEmotionScore: data.reduce((sum, item) => sum + (parseFloat(item['Emotion Score']) || 5), 0) / data.length,
+      avgFearLevel: data.reduce((sum, item) => sum + (parseFloat(item['Fear Level']) || 5), 0) / data.length,
+      avgGreedLevel: data.reduce((sum, item) => sum + (parseFloat(item['Greed Level']) || 5), 0) / data.length,
+      avgConfidence: data.reduce((sum, item) => sum + (parseFloat(item['Confidence Level']) || 5), 0) / data.length,
       totalEntries: data.length,
       recommendations: []
     };
+    
+    Logger.log('Calculated analysis averages: ' + JSON.stringify(analysis));
     
     // Generate recommendations based on patterns
     if (analysis.avgFearLevel > 7) {
@@ -294,9 +429,12 @@ function analyzeEmotionalPatterns() {
       analysis.recommendations.push('Your emotional control appears balanced. Keep up the good work!');
     }
     
+    Logger.log('Final analysis with recommendations: ' + JSON.stringify(analysis));
+    
     return analysis;
   } catch (error) {
     Logger.log('Error analyzing patterns: ' + error.toString());
+    Logger.log('Error stack: ' + error.stack);
     return { error: error.toString() };
   }
 }

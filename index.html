@@ -475,8 +475,71 @@
                 <h3>💰 Log Trade Result</h3>
                 <form id="tradeForm">
                     <div class="form-group">
-                        <label>Symbol</label>
-                        <input type="text" id="tradeSymbol" placeholder="e.g., AAPL, EURUSD">
+                        <label>Futures Symbol</label>
+                        <select id="tradeSymbol">
+                            <option value="">Select Symbol</option>
+                            <optgroup label="Stock Index Futures">
+                                <option value="ES">ES - E-mini S&P 500</option>
+                                <option value="MES">MES - Micro E-mini S&P 500</option>
+                                <option value="NQ">NQ - E-mini NASDAQ 100</option>
+                                <option value="MNQ">MNQ - Micro E-mini NASDAQ 100</option>
+                                <option value="YM">YM - E-mini Dow Jones</option>
+                                <option value="MYM">MYM - Micro E-mini Dow Jones</option>
+                                <option value="RTY">RTY - E-mini Russell 2000</option>
+                                <option value="M2K">M2K - Micro E-mini Russell 2000</option>
+                            </optgroup>
+                            <optgroup label="Energy Futures">
+                                <option value="CL">CL - Crude Oil</option>
+                                <option value="MCL">MCL - Micro Crude Oil</option>
+                                <option value="NG">NG - Natural Gas</option>
+                                <option value="RB">RB - Gasoline</option>
+                                <option value="HO">HO - Heating Oil</option>
+                            </optgroup>
+                            <optgroup label="Metal Futures">
+                                <option value="GC">GC - Gold</option>
+                                <option value="MGC">MGC - Micro Gold</option>
+                                <option value="SI">SI - Silver</option>
+                                <option value="SIL">SIL - Micro Silver</option>
+                                <option value="HG">HG - Copper</option>
+                                <option value="PA">PA - Palladium</option>
+                                <option value="PL">PL - Platinum</option>
+                            </optgroup>
+                            <optgroup label="Currency Futures">
+                                <option value="6E">6E - Euro FX</option>
+                                <option value="M6E">M6E - Micro Euro FX</option>
+                                <option value="6B">6B - British Pound</option>
+                                <option value="M6B">M6B - Micro British Pound</option>
+                                <option value="6J">6J - Japanese Yen</option>
+                                <option value="6A">6A - Australian Dollar</option>
+                                <option value="6C">6C - Canadian Dollar</option>
+                                <option value="6S">6S - Swiss Franc</option>
+                            </optgroup>
+                            <optgroup label="Agricultural Futures">
+                                <option value="ZC">ZC - Corn</option>
+                                <option value="ZS">ZS - Soybeans</option>
+                                <option value="ZW">ZW - Wheat</option>
+                                <option value="LE">LE - Live Cattle</option>
+                                <option value="HE">HE - Lean Hogs</option>
+                                <option value="CC">CC - Cocoa</option>
+                                <option value="KC">KC - Coffee</option>
+                                <option value="SB">SB - Sugar</option>
+                                <option value="CT">CT - Cotton</option>
+                            </optgroup>
+                            <optgroup label="Bond Futures">
+                                <option value="ZB">ZB - 30-Year T-Bond</option>
+                                <option value="ZN">ZN - 10-Year T-Note</option>
+                                <option value="ZF">ZF - 5-Year T-Note</option>
+                                <option value="ZT">ZT - 2-Year T-Note</option>
+                            </optgroup>
+                            <optgroup label="Other">
+                                <option value="CUSTOM">Custom Symbol</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="customSymbolGroup" style="display: none;">
+                        <label>Custom Symbol</label>
+                        <input type="text" id="customSymbol" placeholder="Enter custom symbol">
                     </div>
                     
                     <div class="form-group">
@@ -498,9 +561,15 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Quantity</label>
-                        <input type="number" id="quantity" step="0.01" placeholder="0">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Contracts</label>
+                            <input type="number" id="quantity" step="1" min="1" placeholder="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Current Balance ($)</label>
+                            <input type="number" id="currentBalance" step="0.01" placeholder="10000.00">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -570,13 +639,26 @@
                 const slider = document.getElementById(sliderId);
                 const valueDisplay = document.getElementById(sliderId.replace('Level', 'Value').replace('Score', 'Value'));
                 
-                slider.addEventListener('input', function() {
-                    valueDisplay.textContent = this.value;
-                });
+                if (slider && valueDisplay) {
+                    slider.addEventListener('input', function() {
+                        valueDisplay.textContent = this.value;
+                    });
+                }
             });
         }
 
-        // Handle form submission
+        // Handle custom symbol selection
+        document.getElementById('tradeSymbol').addEventListener('change', function() {
+            const customGroup = document.getElementById('customSymbolGroup');
+            if (this.value === 'CUSTOM') {
+                customGroup.style.display = 'block';
+            } else {
+                customGroup.style.display = 'none';
+                document.getElementById('customSymbol').value = '';
+            }
+        });
+
+        // Handle emotion form submission
         document.getElementById('emotionForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -598,6 +680,11 @@
                     if (result.success) {
                         messageDiv.innerHTML = '<div class="success-message">' + result.message + '</div>';
                         document.getElementById('emotionForm').reset();
+                        // Reset sliders to default values
+                        document.getElementById('emotionScore').value = 5;
+                        document.getElementById('confidenceLevel').value = 5;
+                        document.getElementById('fearLevel').value = 5;
+                        document.getElementById('greedLevel').value = 5;
                         initializeSliders();
                         loadAnalysis();
                     } else {
@@ -730,12 +817,18 @@
         document.getElementById('tradeForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            let symbol = document.getElementById('tradeSymbol').value;
+            if (symbol === 'CUSTOM') {
+                symbol = document.getElementById('customSymbol').value;
+            }
+            
             const tradeData = {
-                symbol: document.getElementById('tradeSymbol').value,
+                symbol: symbol,
                 tradeType: document.getElementById('tradeType').value,
                 entryPrice: document.getElementById('entryPrice').value,
                 exitPrice: document.getElementById('exitPrice').value,
                 quantity: document.getElementById('quantity').value,
+                currentBalance: document.getElementById('currentBalance').value,
                 result: document.getElementById('tradeResult').value,
                 emotionScore: parseInt(document.getElementById('tradeEmotion').value),
                 confidenceLevel: parseInt(document.getElementById('tradeConfidence').value),
@@ -751,8 +844,12 @@
                         messageDiv.innerHTML = '<div class="success-message">' + result.message + 
                             (result.profitLoss ? '<br>P&L: $' + result.profitLoss : '') + '</div>';
                         document.getElementById('tradeForm').reset();
+                        // Reset trade sliders
+                        document.getElementById('tradeEmotion').value = 5;
+                        document.getElementById('tradeConfidence').value = 5;
+                        document.getElementById('quantity').value = 1;
                         initializeTradeSliders();
-                        loadPerformance();
+                        setTimeout(loadPerformance, 1000); // Delay to ensure data is saved
                     } else {
                         messageDiv.innerHTML = '<div class="error-message">Error: ' + result.message + '</div>';
                     }
@@ -770,7 +867,9 @@
 
             google.script.run
                 .withSuccessHandler(function(data) {
-                    if (!data.performance) {
+                    console.log('Performance data received:', data); // Debug log
+                    
+                    if (!data || !data.performance) {
                         performanceDiv.innerHTML = '<div class="loading">No trade data yet. Record your first trade!</div>';
                         return;
                     }
@@ -792,7 +891,7 @@
                     html += '</div></div>';
 
                     // Show recent trades
-                    if (data.trades.length > 0) {
+                    if (data.trades && data.trades.length > 0) {
                         html += '<div style="margin-top: 20px;"><h3>Recent Trades</h3>';
                         html += '<div style="max-height: 300px; overflow-y: auto;">';
                         data.trades.slice(0, 10).forEach(trade => {
@@ -814,6 +913,7 @@
                     performanceDiv.innerHTML = html;
                 })
                 .withFailureHandler(function(error) {
+                    console.error('Performance loading error:', error); // Debug log
                     performanceDiv.innerHTML = '<div class="error-message">Error loading performance: ' + error.toString() + '</div>';
                 })
                 .getTradePerformance();
@@ -821,6 +921,7 @@
 
         // Initialize the app
         window.onload = function() {
+            console.log('App initializing...'); // Debug log
             initializeSliders();
             initializeTradeSliders();
             loadAnalysis();
