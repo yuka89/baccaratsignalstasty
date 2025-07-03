@@ -466,6 +466,97 @@
             <div id="dailyQuote">Loading inspirational quote...</div>
         </div>
 
+        <!-- Trade Tracking Section -->
+        <div class="analysis-section">
+            <h2>📈 Trade Tracking</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                <!-- Upload Trade Chart -->
+                <div style="background: #f7fafc; padding: 20px; border-radius: 10px;">
+                    <h3>📸 Upload Trade Chart</h3>
+                    <div class="form-group">
+                        <label>Chart Screenshot</label>
+                        <input type="file" id="chartUpload" accept="image/*" style="padding: 10px;">
+                        <div id="uploadPreview" style="margin-top: 10px; max-width: 200px;"></div>
+                    </div>
+                    <button class="btn" onclick="uploadChart()" id="uploadBtn" disabled>Upload Chart</button>
+                    <div id="uploadMessage"></div>
+                </div>
+
+                <!-- Log Trade Result -->
+                <div style="background: #f7fafc; padding: 20px; border-radius: 10px;">
+                    <h3>💰 Log Trade Result</h3>
+                    <form id="tradeForm">
+                        <div class="form-group">
+                            <label>Symbol</label>
+                            <input type="text" id="tradeSymbol" placeholder="e.g., AAPL, EURUSD">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Trade Type</label>
+                            <select id="tradeType">
+                                <option value="Long">Long</option>
+                                <option value="Short">Short</option>
+                            </select>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Entry Price</label>
+                                <input type="number" id="entryPrice" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label>Exit Price</label>
+                                <input type="number" id="exitPrice" step="0.01" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" id="quantity" step="0.01" placeholder="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Result</label>
+                            <select id="tradeResult">
+                                <option value="Win">Win ✅</option>
+                                <option value="Loss">Loss ❌</option>
+                                <option value="Breakeven">Breakeven ➖</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Emotion Score (1-10)</label>
+                            <input type="range" id="tradeEmotion" min="1" max="10" value="5" class="slider">
+                            <div style="text-align: center;">Current: <span id="tradeEmotionValue">5</span></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Confidence Level (1-10)</label>
+                            <input type="range" id="tradeConfidence" min="1" max="10" value="5" class="slider">
+                            <div style="text-align: center;">Current: <span id="tradeConfidenceValue">5</span></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Trade Notes</label>
+                            <textarea id="tradeNotes" rows="3" placeholder="What happened in this trade?"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn">Record Trade</button>
+                    </form>
+                    <div id="tradeMessage"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trade Performance -->
+        <div class="analysis-section">
+            <h2>📊 Trade Performance</h2>
+            <div id="performanceContent">
+                <div class="loading">Loading performance data...</div>
+            </div>
+            <button class="btn" onclick="loadPerformance()" style="margin-top: 20px;">Refresh Performance</button>
+        </div>
+
         <!-- Trading Psychology Tips -->
         <div class="analysis-section">
             <h2>🧠 Trading Psychology Tips</h2>
@@ -630,12 +721,173 @@
             document.getElementById('emergencyPopup').style.display = 'none';
         }
 
+        // Initialize trade sliders
+        function initializeTradeSliders() {
+            const tradeEmotion = document.getElementById('tradeEmotion');
+            const tradeConfidence = document.getElementById('tradeConfidence');
+            
+            if (tradeEmotion) {
+                tradeEmotion.addEventListener('input', function() {
+                    document.getElementById('tradeEmotionValue').textContent = this.value;
+                });
+            }
+            
+            if (tradeConfidence) {
+                tradeConfidence.addEventListener('input', function() {
+                    document.getElementById('tradeConfidenceValue').textContent = this.value;
+                });
+            }
+        }
+
+        // File upload handling
+        let uploadedImageData = null;
+        document.getElementById('chartUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImageData = e.target.result;
+                    document.getElementById('uploadPreview').innerHTML = 
+                        '<img src="' + e.target.result + '" style="width: 100%; border-radius: 5px;">';
+                    document.getElementById('uploadBtn').disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Upload chart function
+        function uploadChart() {
+            if (!uploadedImageData) {
+                document.getElementById('uploadMessage').innerHTML = 
+                    '<div class="error-message">Please select an image first</div>';
+                return;
+            }
+
+            document.getElementById('uploadMessage').innerHTML = 
+                '<div class="loading">Uploading chart...</div>';
+
+            const fileName = 'trade_chart_' + new Date().getTime() + '.png';
+
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result.success) {
+                        document.getElementById('uploadMessage').innerHTML = 
+                            '<div class="success-message">' + result.message + '</div>';
+                        window.lastUploadedImageId = result.fileId;
+                    } else {
+                        document.getElementById('uploadMessage').innerHTML = 
+                            '<div class="error-message">Upload failed: ' + result.message + '</div>';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    document.getElementById('uploadMessage').innerHTML = 
+                        '<div class="error-message">Upload error: ' + error.toString() + '</div>';
+                })
+                .uploadTradeChart(uploadedImageData, fileName);
+        }
+
+        // Trade form submission
+        document.getElementById('tradeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const tradeData = {
+                symbol: document.getElementById('tradeSymbol').value,
+                tradeType: document.getElementById('tradeType').value,
+                entryPrice: document.getElementById('entryPrice').value,
+                exitPrice: document.getElementById('exitPrice').value,
+                quantity: document.getElementById('quantity').value,
+                result: document.getElementById('tradeResult').value,
+                emotionScore: parseInt(document.getElementById('tradeEmotion').value),
+                confidenceLevel: parseInt(document.getElementById('tradeConfidence').value),
+                tradeNotes: document.getElementById('tradeNotes').value,
+                chartImageId: window.lastUploadedImageId || ''
+            };
+
+            const messageDiv = document.getElementById('tradeMessage');
+            messageDiv.innerHTML = '<div class="loading">Recording trade...</div>';
+
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result.success) {
+                        messageDiv.innerHTML = '<div class="success-message">' + result.message + 
+                            (result.profitLoss ? '<br>P&L: $' + result.profitLoss : '') + '</div>';
+                        document.getElementById('tradeForm').reset();
+                        initializeTradeSliders();
+                        loadPerformance();
+                    } else {
+                        messageDiv.innerHTML = '<div class="error-message">Error: ' + result.message + '</div>';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    messageDiv.innerHTML = '<div class="error-message">Error: ' + error.toString() + '</div>';
+                })
+                .recordTrade(tradeData);
+        });
+
+        // Load performance data
+        function loadPerformance() {
+            const performanceDiv = document.getElementById('performanceContent');
+            performanceDiv.innerHTML = '<div class="loading">Loading performance data...</div>';
+
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    if (!data.performance) {
+                        performanceDiv.innerHTML = '<div class="loading">No trade data yet. Record your first trade!</div>';
+                        return;
+                    }
+
+                    const perf = data.performance;
+                    let html = '<div class="metrics-grid">';
+                    html += '<div class="metric-card"><div class="metric-value">' + perf.totalTrades + '</div><div class="metric-label">Total Trades</div></div>';
+                    html += '<div class="metric-card"><div class="metric-value">' + perf.winRate + '%</div><div class="metric-label">Win Rate</div></div>';
+                    html += '<div class="metric-card"><div class="metric-value">$' + perf.totalPnL + '</div><div class="metric-label">Total P&L</div></div>';
+                    html += '<div class="metric-card"><div class="metric-value">' + perf.avgEmotionScore + '</div><div class="metric-label">Avg Emotion</div></div>';
+                    html += '</div>';
+
+                    html += '<div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin-top: 20px;">';
+                    html += '<h3>Performance Breakdown</h3>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">';
+                    html += '<div><strong>' + perf.wins + '</strong><br>Wins ✅</div>';
+                    html += '<div><strong>' + perf.losses + '</strong><br>Losses ❌</div>';
+                    html += '<div><strong>' + (perf.totalTrades - perf.wins - perf.losses) + '</strong><br>Breakeven ➖</div>';
+                    html += '</div></div>';
+
+                    // Show recent trades
+                    if (data.trades.length > 0) {
+                        html += '<div style="margin-top: 20px;"><h3>Recent Trades</h3>';
+                        html += '<div style="max-height: 300px; overflow-y: auto;">';
+                        data.trades.slice(0, 10).forEach(trade => {
+                            const resultColor = trade.Result === 'Win' ? '#48bb78' : trade.Result === 'Loss' ? '#f56565' : '#ed8936';
+                            html += '<div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid ' + resultColor + ';">';
+                            html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">';
+                            html += '<div><strong>' + trade.Symbol + '</strong><br>' + trade['Trade Type'] + '</div>';
+                            html += '<div>' + trade.Result + '<br>$' + (trade['Profit/Loss'] || '0') + '</div>';
+                            html += '<div>Emotion: ' + trade['Emotion Score'] + '<br>Confidence: ' + trade['Confidence Level'] + '</div>';
+                            html += '</div>';
+                            if (trade['Trade Notes']) {
+                                html += '<div style="margin-top: 10px; font-style: italic; color: #666;">' + trade['Trade Notes'] + '</div>';
+                            }
+                            html += '</div>';
+                        });
+                        html += '</div></div>';
+                    }
+
+                    performanceDiv.innerHTML = html;
+                })
+                .withFailureHandler(function(error) {
+                    performanceDiv.innerHTML = '<div class="error-message">Error loading performance: ' + error.toString() + '</div>';
+                })
+                .getTradePerformance();
+        }
+
         // Initialize the app
         window.onload = function() {
             initializeSliders();
+            initializeTradeSliders();
             loadAnalysis();
             loadTips();
             loadQuote();
+            loadPerformance();
         };
     </script>
 </body>

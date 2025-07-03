@@ -4,7 +4,8 @@
  */
 
 // Global configuration
-const SHEET_NAME = 'TradingEmotions';
+const SHEET_NAME_EMOTIONS = 'TradingEmotions';
+const SHEET_NAME_TRADES = 'TradeResults';
 const SPREADSHEET_ID = ''; // Set this to your Google Sheets ID
 
 /**
@@ -29,27 +30,44 @@ function include(filename) {
  */
 function initializeSpreadsheet() {
   try {
-    let sheet;
+    let ss;
     if (SPREADSHEET_ID) {
-      const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-      sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+      ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     } else {
-      const ss = SpreadsheetApp.create('Trading Emotions Data');
-      sheet = ss.getActiveSheet();
-      sheet.setName(SHEET_NAME);
+      ss = SpreadsheetApp.create('Trading Emotions & Performance Data');
       Logger.log('Created new spreadsheet: ' + ss.getId());
     }
     
-    // Set up headers if not exists
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    if (headers.length === 0 || headers[0] === '') {
-      sheet.getRange(1, 1, 1, 8).setValues([[
+    // Initialize Emotions sheet
+    let emotionsSheet = ss.getSheetByName(SHEET_NAME_EMOTIONS);
+    if (!emotionsSheet) {
+      emotionsSheet = ss.insertSheet(SHEET_NAME_EMOTIONS);
+    }
+    
+    const emotionsHeaders = emotionsSheet.getRange(1, 1, 1, emotionsSheet.getLastColumn()).getValues()[0];
+    if (emotionsHeaders.length === 0 || emotionsHeaders[0] === '') {
+      emotionsSheet.getRange(1, 1, 1, 8).setValues([[
         'Timestamp', 'Emotion Score', 'Market Action', 'Confidence Level', 
         'Fear Level', 'Greed Level', 'Notes', 'Reflection'
       ]]);
     }
     
-    return sheet;
+    // Initialize Trades sheet
+    let tradesSheet = ss.getSheetByName(SHEET_NAME_TRADES);
+    if (!tradesSheet) {
+      tradesSheet = ss.insertSheet(SHEET_NAME_TRADES);
+    }
+    
+    const tradesHeaders = tradesSheet.getRange(1, 1, 1, tradesSheet.getLastColumn()).getValues()[0];
+    if (tradesHeaders.length === 0 || tradesHeaders[0] === '') {
+      tradesSheet.getRange(1, 1, 1, 12).setValues([[
+        'Timestamp', 'Symbol', 'Trade Type', 'Entry Price', 'Exit Price', 
+        'Quantity', 'Result', 'Profit/Loss', 'Trade Notes', 'Chart Image ID', 
+        'Emotion Score', 'Confidence Level'
+      ]]);
+    }
+    
+    return { emotions: emotionsSheet, trades: tradesSheet };
   } catch (error) {
     Logger.log('Error initializing spreadsheet: ' + error.toString());
     throw error;
@@ -57,11 +75,19 @@ function initializeSpreadsheet() {
 }
 
 /**
+ * Get emotions sheet only (for backward compatibility)
+ */
+function getEmotionsSheet() {
+  const sheets = initializeSpreadsheet();
+  return sheets.emotions;
+}
+
+/**
  * Record emotional state and trading decision
  */
 function recordEmotionalState(data) {
   try {
-    const sheet = initializeSpreadsheet();
+    const sheet = getEmotionsSheet();
     const timestamp = new Date();
     
     sheet.appendRow([
@@ -83,11 +109,151 @@ function recordEmotionalState(data) {
 }
 
 /**
+ * Record trade result with performance data
+ */
+function recordTrade(tradeData) {
+  try {
+    const sheets = initializeSpreadsheet();
+    const sheet = sheets.trades;
+    
+    // Calculate profit/loss
+    let profitLoss = 0;
+    if (tradeData.entryPrice && tradeData.exitPrice && tradeData.quantity) {
+      const entryPrice = parseFloat(tradeData.entryPrice);
+      const exitPrice = parseFloat(tradeData.exitPrice);
+      const quantity = parseFloat(tradeData.quantity);
+      
+      if (tradeData.tradeType === 'Long') {
+        profitLoss = (exitPrice - entryPrice) * quantity;
+      } else {
+        profitLoss = (entryPrice - exitPrice) * quantity;
+      }
+    }
+    
+    sheet.appendRow([
+      new Date(),
+      tradeData.symbol || '',
+      tradeData.tradeType || 'Long',
+      tradeData.entryPrice || '',
+      tradeData.exitPrice || '',
+      tradeData.quantity || '',
+      tradeData.result || 'Win',
+      profitLoss.toFixed(2),
+      tradeData.tradeNotes || '',
+      tradeData.chartImageId || '',
+      tradeData.emotionScore || 5,
+      tradeData.confidenceLevel || 5
+    ]);
+    
+    return { 
+      success: true, 
+      message: 'Trade recorded successfully', 
+      profitLoss: profitLoss.toFixed(2)
+    };
+  } catch (error) {
+    Logger.log('Error recording trade: ' + error.toString());
+    return { success: false, message: error.toString() };
+  }
+}
+
+/**
+ * Upload trade chart image
+ */
+function uploadTradeChart(imageData, fileName) {
+  try {
+    // Create a folder for trade charts if it doesn't exist
+    const folders = DriveApp.getFoldersByName('Trading Charts');
+    let folder;
+    if (folders.hasNext()) {
+      folder = folders.next();
+    } else {
+      folder = DriveApp.createFolder('Trading Charts');
+    }
+    
+    // Convert base64 to blob and create file
+    const contentType = imageData.split(';')[0].split(':')[1];
+    const base64Data = imageData.split(',')[1];
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, fileName);
+    const file = folder.createFile(blob);
+    
+    // Make file viewable
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return { 
+      success: true, 
+      fileId: file.getId(), 
+      url: file.getUrl(),
+      message: 'Chart uploaded successfully' 
+    };
+  } catch (error) {
+    Logger.log('Error uploading chart: ' + error.toString());
+    return { success: false, message: error.toString() };
+  }
+}
+
+/**
+ * Get trade performance data
+ */
+function getTradePerformance(days = 30) {
+  try {
+    const sheets = initializeSpreadsheet();
+    const sheet = sheets.trades;
+    const data = sheet.getDataRange().getValues();
+    
+    if (data.length <= 1) return { trades: [], performance: null };
+    
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    const recentTrades = rows
+      .filter(row => new Date(row[0]) >= cutoffDate)
+      .map(row => {
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index];
+        });
+        return obj;
+      });
+    
+    // Calculate performance metrics
+    const wins = recentTrades.filter(trade => trade.Result === 'Win').length;
+    const losses = recentTrades.filter(trade => trade.Result === 'Loss').length;
+    const totalTrades = recentTrades.length;
+    const winRate = totalTrades > 0 ? (wins / totalTrades * 100).toFixed(1) : 0;
+    
+    const totalPnL = recentTrades.reduce((sum, trade) => {
+      return sum + (parseFloat(trade['Profit/Loss']) || 0);
+    }, 0);
+    
+    const avgEmotionScore = recentTrades.length > 0 ? 
+      recentTrades.reduce((sum, trade) => sum + (trade['Emotion Score'] || 5), 0) / recentTrades.length : 5;
+    
+    return {
+      trades: recentTrades,
+      performance: {
+        totalTrades,
+        wins,
+        losses,
+        winRate,
+        totalPnL: totalPnL.toFixed(2),
+        avgEmotionScore: avgEmotionScore.toFixed(1)
+      }
+    };
+  } catch (error) {
+    Logger.log('Error getting trade performance: ' + error.toString());
+    return { trades: [], performance: null };
+  }
+}
+
+/**
  * Get recent emotional data for analysis
  */
 function getRecentEmotionalData(days = 30) {
   try {
-    const sheet = initializeSpreadsheet();
+    const sheet = getEmotionsSheet();
     const data = sheet.getDataRange().getValues();
     
     if (data.length <= 1) return [];
