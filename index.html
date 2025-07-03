@@ -469,82 +469,69 @@
         <!-- Trade Tracking Section -->
         <div class="analysis-section">
             <h2>📈 Trade Tracking</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
-                <!-- Upload Trade Chart -->
-                <div style="background: #f7fafc; padding: 20px; border-radius: 10px;">
-                    <h3>📸 Upload Trade Chart</h3>
+            
+            <!-- Log Trade Result -->
+            <div style="background: #f7fafc; padding: 20px; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+                <h3>💰 Log Trade Result</h3>
+                <form id="tradeForm">
                     <div class="form-group">
-                        <label>Chart Screenshot</label>
-                        <input type="file" id="chartUpload" accept="image/*" style="padding: 10px;">
-                        <div id="uploadPreview" style="margin-top: 10px; max-width: 200px;"></div>
+                        <label>Symbol</label>
+                        <input type="text" id="tradeSymbol" placeholder="e.g., AAPL, EURUSD">
                     </div>
-                    <button class="btn" onclick="uploadChart()" id="uploadBtn" disabled>Upload Chart</button>
-                    <div id="uploadMessage"></div>
-                </div>
+                    
+                    <div class="form-group">
+                        <label>Trade Type</label>
+                        <select id="tradeType">
+                            <option value="Long">Long</option>
+                            <option value="Short">Short</option>
+                        </select>
+                    </div>
 
-                <!-- Log Trade Result -->
-                <div style="background: #f7fafc; padding: 20px; border-radius: 10px;">
-                    <h3>💰 Log Trade Result</h3>
-                    <form id="tradeForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group">
-                            <label>Symbol</label>
-                            <input type="text" id="tradeSymbol" placeholder="e.g., AAPL, EURUSD">
+                            <label>Entry Price</label>
+                            <input type="number" id="entryPrice" step="0.01" placeholder="0.00">
                         </div>
-                        
                         <div class="form-group">
-                            <label>Trade Type</label>
-                            <select id="tradeType">
-                                <option value="Long">Long</option>
-                                <option value="Short">Short</option>
-                            </select>
+                            <label>Exit Price</label>
+                            <input type="number" id="exitPrice" step="0.01" placeholder="0.00">
                         </div>
+                    </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                            <div class="form-group">
-                                <label>Entry Price</label>
-                                <input type="number" id="entryPrice" step="0.01" placeholder="0.00">
-                            </div>
-                            <div class="form-group">
-                                <label>Exit Price</label>
-                                <input type="number" id="exitPrice" step="0.01" placeholder="0.00">
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="quantity" step="0.01" placeholder="0">
+                    </div>
 
-                        <div class="form-group">
-                            <label>Quantity</label>
-                            <input type="number" id="quantity" step="0.01" placeholder="0">
-                        </div>
+                    <div class="form-group">
+                        <label>Result</label>
+                        <select id="tradeResult">
+                            <option value="Win">Win ✅</option>
+                            <option value="Loss">Loss ❌</option>
+                            <option value="Breakeven">Breakeven ➖</option>
+                        </select>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Result</label>
-                            <select id="tradeResult">
-                                <option value="Win">Win ✅</option>
-                                <option value="Loss">Loss ❌</option>
-                                <option value="Breakeven">Breakeven ➖</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label>Emotion Score (1-10)</label>
+                        <input type="range" id="tradeEmotion" min="1" max="10" value="5" class="slider">
+                        <div style="text-align: center;">Current: <span id="tradeEmotionValue">5</span></div>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Emotion Score (1-10)</label>
-                            <input type="range" id="tradeEmotion" min="1" max="10" value="5" class="slider">
-                            <div style="text-align: center;">Current: <span id="tradeEmotionValue">5</span></div>
-                        </div>
+                    <div class="form-group">
+                        <label>Confidence Level (1-10)</label>
+                        <input type="range" id="tradeConfidence" min="1" max="10" value="5" class="slider">
+                        <div style="text-align: center;">Current: <span id="tradeConfidenceValue">5</span></div>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Confidence Level (1-10)</label>
-                            <input type="range" id="tradeConfidence" min="1" max="10" value="5" class="slider">
-                            <div style="text-align: center;">Current: <span id="tradeConfidenceValue">5</span></div>
-                        </div>
+                    <div class="form-group">
+                        <label>Trade Notes</label>
+                        <textarea id="tradeNotes" rows="3" placeholder="What happened in this trade?"></textarea>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Trade Notes</label>
-                            <textarea id="tradeNotes" rows="3" placeholder="What happened in this trade?"></textarea>
-                        </div>
-
-                        <button type="submit" class="btn">Record Trade</button>
-                    </form>
-                    <div id="tradeMessage"></div>
-                </div>
+                    <button type="submit" class="btn">Record Trade</button>
+                </form>
+                <div id="tradeMessage"></div>
             </div>
         </div>
 
@@ -739,53 +726,6 @@
             }
         }
 
-        // File upload handling
-        let uploadedImageData = null;
-        document.getElementById('chartUpload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedImageData = e.target.result;
-                    document.getElementById('uploadPreview').innerHTML = 
-                        '<img src="' + e.target.result + '" style="width: 100%; border-radius: 5px;">';
-                    document.getElementById('uploadBtn').disabled = false;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Upload chart function
-        function uploadChart() {
-            if (!uploadedImageData) {
-                document.getElementById('uploadMessage').innerHTML = 
-                    '<div class="error-message">Please select an image first</div>';
-                return;
-            }
-
-            document.getElementById('uploadMessage').innerHTML = 
-                '<div class="loading">Uploading chart...</div>';
-
-            const fileName = 'trade_chart_' + new Date().getTime() + '.png';
-
-            google.script.run
-                .withSuccessHandler(function(result) {
-                    if (result.success) {
-                        document.getElementById('uploadMessage').innerHTML = 
-                            '<div class="success-message">' + result.message + '</div>';
-                        window.lastUploadedImageId = result.fileId;
-                    } else {
-                        document.getElementById('uploadMessage').innerHTML = 
-                            '<div class="error-message">Upload failed: ' + result.message + '</div>';
-                    }
-                })
-                .withFailureHandler(function(error) {
-                    document.getElementById('uploadMessage').innerHTML = 
-                        '<div class="error-message">Upload error: ' + error.toString() + '</div>';
-                })
-                .uploadTradeChart(uploadedImageData, fileName);
-        }
-
         // Trade form submission
         document.getElementById('tradeForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -799,8 +739,7 @@
                 result: document.getElementById('tradeResult').value,
                 emotionScore: parseInt(document.getElementById('tradeEmotion').value),
                 confidenceLevel: parseInt(document.getElementById('tradeConfidence').value),
-                tradeNotes: document.getElementById('tradeNotes').value,
-                chartImageId: window.lastUploadedImageId || ''
+                tradeNotes: document.getElementById('tradeNotes').value
             };
 
             const messageDiv = document.getElementById('tradeMessage');

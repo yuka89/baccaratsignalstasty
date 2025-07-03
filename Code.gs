@@ -140,7 +140,7 @@ function recordTrade(tradeData) {
       tradeData.result || 'Win',
       profitLoss.toFixed(2),
       tradeData.tradeNotes || '',
-      tradeData.chartImageId || '',
+      '', // Chart Image ID - removed
       tradeData.emotionScore || 5,
       tradeData.confidenceLevel || 5
     ]);
