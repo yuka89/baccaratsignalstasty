@@ -238,8 +238,9 @@ function getContractPointValue(symbol) {
 /**
  * Get trade performance data
  */
-function getTradePerformance(days = 30) {
+function getTradePerformance(days) {
   try {
+    days = days || 30;  // Default to 30 days if not provided
     Logger.log('Getting trade performance data for last ' + days + ' days');
     
     const sheets = initializeSpreadsheet();
@@ -322,8 +323,9 @@ function getTradePerformance(days = 30) {
 /**
  * Get recent emotional data for analysis
  */
-function getRecentEmotionalData(days = 30) {
+function getRecentEmotionalData(days) {
   try {
+    days = days || 30;  // Default to 30 days if not provided
     Logger.log('Getting recent emotional data for last ' + days + ' days');
     
     const sheet = getEmotionsSheet();
