@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Emotion Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .slider-container {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-emergency {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            margin-top: 10px;
+        }
+
+        .analysis-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .metric-label {
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .recommendations {
+            background: #e6fffa;
+            border-left: 4px solid #38b2ac;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .recommendations h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .recommendations ul {
+            list-style: none;
+        }
+
+        .recommendations li {
+            padding: 8px 0;
+            border-bottom: 1px solid #bee3f8;
+        }
+
+        .recommendations li:last-child {
+            border-bottom: none;
+        }
+
+        .quote-section {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-style: italic;
+            color: #4a5568;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .tip-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .tip-category {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .tip-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .tip-content {
+            color: #4a5568;
+            line-height: 1.5;
+        }
+
+        .severity-high {
+            border-left-color: #f56565;
+        }
+
+        .severity-medium {
+            border-left-color: #ed8936;
+        }
+
+        .severity-low {
+            border-left-color: #48bb78;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #276749;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #9ae6b4;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #feb2b2;
+        }
+
+        .emergency-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emergency-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        .emergency-title {
+            color: #e53e3e;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .emergency-instructions {
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .emergency-instructions li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .close-btn {
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Trading Emotion Control</h1>
+            <p>Master Your Mind, Master The Markets</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Emotion Logging Form -->
+            <div class="card">
+                <h2>📊 Log Your Current State</h2>
+                <form id="emotionForm">
+                    <div class="form-group">
+                        <label>Overall Emotional State (1-10)</label>
+                        <div class="slider-container">
+                            <input type="range" id="emotionScore" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>Very Negative</span>
+                                <span>Neutral</span>
+                                <span>Very Positive</span>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            Current: <span id="emotionValue">5</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Market Action</label>
+                        <select id="marketAction">
+                            <option value="Hold">Hold</option>
+                            <option value="Buy">Buy</option>
+                            <option value="Sell">Sell</option>
+                            <option value="Watch">Watch</option>
+                            <option value="Close Position">Close Position</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confidence Level (1-10)</label>
+                        <div class="slider-container">
+                            <input type="range" id="confidenceLevel" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>No Confidence</span>
+                                <span>Moderate</span>
+                                <span>Very Confident</span>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            Current: <span id="confidenceValue">5</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fear Level (1-10)</label>
+                        <div class="slider-container">
+                            <input type="range" id="fearLevel" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>No Fear</span>
+                                <span>Moderate</span>
+                                <span>Extreme Fear</span>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            Current: <span id="fearValue">5</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Greed Level (1-10)</label>
+                        <div class="slider-container">
+                            <input type="range" id="greedLevel" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>No Greed</span>
+                                <span>Moderate</span>
+                                <span>Extreme Greed</span>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            Current: <span id="greedValue">5</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="notes" rows="3" placeholder="What's driving your current emotional state?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reflection</label>
+                        <textarea id="reflection" rows="3" placeholder="How do you plan to handle this situation?"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn">Record Emotional State</button>
+                    <button type="button" class="btn btn-emergency" onclick="showEmergencyReset()">🚨 Emergency Reset</button>
+                </form>
+
+                <div id="formMessage"></div>
+            </div>
+
+            <!-- Quick Insights -->
+            <div class="card">
+                <h2>📈 Your Insights</h2>
+                <div id="analysisContent">
+                    <div class="loading">Loading your analysis...</div>
+                </div>
+                <button class="btn" onclick="loadAnalysis()" style="margin-top: 20px;">Refresh Analysis</button>
+            </div>
+        </div>
+
+        <!-- Quote Section -->
+        <div class="quote-section">
+            <div id="dailyQuote">Loading inspirational quote...</div>
+        </div>
+
+        <!-- Trading Psychology Tips -->
+        <div class="analysis-section">
+            <h2>🧠 Trading Psychology Tips</h2>
+            <div id="tipsContent">
+                <div class="loading">Loading tips...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Reset Popup -->
+    <div id="emergencyPopup" class="emergency-popup">
+        <div class="emergency-content">
+            <div class="emergency-title">🚨 EMERGENCY EMOTIONAL RESET</div>
+            <div id="emergencyContent"></div>
+            <button class="close-btn" onclick="closeEmergencyPopup()">I'm Ready to Continue</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize sliders
+        function initializeSliders() {
+            const sliders = ['emotionScore', 'confidenceLevel', 'fearLevel', 'greedLevel'];
+            sliders.forEach(sliderId => {
+                const slider = document.getElementById(sliderId);
+                const valueDisplay = document.getElementById(sliderId.replace('Level', 'Value').replace('Score', 'Value'));
+                
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value;
+                });
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('emotionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                emotionScore: parseInt(document.getElementById('emotionScore').value),
+                marketAction: document.getElementById('marketAction').value,
+                confidenceLevel: parseInt(document.getElementById('confidenceLevel').value),
+                fearLevel: parseInt(document.getElementById('fearLevel').value),
+                greedLevel: parseInt(document.getElementById('greedLevel').value),
+                notes: document.getElementById('notes').value,
+                reflection: document.getElementById('reflection').value
+            };
+
+            const messageDiv = document.getElementById('formMessage');
+            messageDiv.innerHTML = '<div class="loading">Recording your emotional state...</div>';
+
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result.success) {
+                        messageDiv.innerHTML = '<div class="success-message">' + result.message + '</div>';
+                        document.getElementById('emotionForm').reset();
+                        initializeSliders();
+                        loadAnalysis();
+                    } else {
+                        messageDiv.innerHTML = '<div class="error-message">Error: ' + result.message + '</div>';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    messageDiv.innerHTML = '<div class="error-message">Error: ' + error.toString() + '</div>';
+                })
+                .recordEmotionalState(formData);
+        });
+
+        // Load analysis
+        function loadAnalysis() {
+            const analysisDiv = document.getElementById('analysisContent');
+            analysisDiv.innerHTML = '<div class="loading">Loading analysis...</div>';
+
+            google.script.run
+                .withSuccessHandler(function(analysis) {
+                    if (analysis.error) {
+                        analysisDiv.innerHTML = '<div class="error-message">Error loading analysis: ' + analysis.error + '</div>';
+                        return;
+                    }
+
+                    let html = '<div class="metrics-grid">';
+                    html += '<div class="metric-card"><div class="metric-value">' + analysis.avgEmotionScore.toFixed(1) + '</div><div class="metric-label">Avg Emotion</div></div>';
+                    html += '<div class="metric-card"><div class="metric-value">' + analysis.avgFearLevel.toFixed(1) + '</div><div class="metric-label">Avg Fear</div></div>';
+                    html += '<div class="metric-card"><div class="metric-value">' + analysis.avgGreedLevel.toFixed(1) + '</div><div class="metric-label">Avg Greed</div></div>';
+                    html += '<div class="metric-card"><div class="metric-value">' + analysis.avgConfidence.toFixed(1) + '</div><div class="metric-label">Avg Confidence</div></div>';
+                    html += '</div>';
+
+                    if (analysis.recommendations.length > 0) {
+                        html += '<div class="recommendations">';
+                        html += '<h3>Personalized Recommendations</h3>';
+                        html += '<ul>';
+                        analysis.recommendations.forEach(rec => {
+                            html += '<li>• ' + rec + '</li>';
+                        });
+                        html += '</ul>';
+                        html += '</div>';
+                    }
+
+                    html += '<div style="text-align: center; margin-top: 15px; color: #718096;">';
+                    html += 'Based on ' + analysis.totalEntries + ' recorded entries in the last 30 days';
+                    html += '</div>';
+
+                    analysisDiv.innerHTML = html;
+                })
+                .withFailureHandler(function(error) {
+                    analysisDiv.innerHTML = '<div class="error-message">Error: ' + error.toString() + '</div>';
+                })
+                .analyzeEmotionalPatterns();
+        }
+
+        // Load trading tips
+        function loadTips() {
+            google.script.run
+                .withSuccessHandler(function(tips) {
+                    let html = '<div class="tips-grid">';
+                    tips.forEach(tip => {
+                        html += '<div class="tip-card severity-' + tip.severity + '">';
+                        html += '<div class="tip-category">' + tip.category + '</div>';
+                        html += '<div class="tip-title">' + tip.title + '</div>';
+                        html += '<div class="tip-content">' + tip.content + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                    document.getElementById('tipsContent').innerHTML = html;
+                })
+                .withFailureHandler(function(error) {
+                    document.getElementById('tipsContent').innerHTML = '<div class="error-message">Error loading tips: ' + error.toString() + '</div>';
+                })
+                .getTradingPsychologyTips();
+        }
+
+        // Load motivational quote
+        function loadQuote() {
+            google.script.run
+                .withSuccessHandler(function(quote) {
+                    document.getElementById('dailyQuote').innerHTML = '"' + quote + '"';
+                })
+                .withFailureHandler(function(error) {
+                    document.getElementById('dailyQuote').innerHTML = 'Stay disciplined and trust your process.';
+                })
+                .getMotivationalQuote();
+        }
+
+        // Show emergency reset
+        function showEmergencyReset() {
+            google.script.run
+                .withSuccessHandler(function(resetData) {
+                    let html = '<div style="color: #e53e3e; font-weight: bold; margin-bottom: 20px;">' + resetData.message + '</div>';
+                    html += '<div class="emergency-instructions"><ol>';
+                    resetData.instructions.forEach(instruction => {
+                        html += '<li>' + instruction + '</li>';
+                    });
+                    html += '</ol></div>';
+                    html += '<div style="font-style: italic; color: #4a5568; margin-top: 20px;">"' + resetData.quote + '"</div>';
+                    
+                    document.getElementById('emergencyContent').innerHTML = html;
+                    document.getElementById('emergencyPopup').style.display = 'flex';
+                })
+                .emergencyEmotionalReset();
+        }
+
+        // Close emergency popup
+        function closeEmergencyPopup() {
+            document.getElementById('emergencyPopup').style.display = 'none';
+        }
+
+        // Initialize the app
+        window.onload = function() {
+            initializeSliders();
+            loadAnalysis();
+            loadTips();
+            loadQuote();
+        };
+    </script>
+</body>
+</html>
