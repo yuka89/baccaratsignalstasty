@@ -44,7 +44,13 @@ function initializeSpreadsheet() {
       emotionsSheet = ss.insertSheet(SHEET_NAME_EMOTIONS);
     }
     
-    const emotionsHeaders = emotionsSheet.getRange(1, 1, 1, emotionsSheet.getLastColumn()).getValues()[0];
+    // Check if sheet has any data, handle empty sheet case
+    const lastCol = emotionsSheet.getLastColumn();
+    let emotionsHeaders = [];
+    if (lastCol > 0) {
+      emotionsHeaders = emotionsSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    }
+    
     if (emotionsHeaders.length === 0 || emotionsHeaders[0] === '') {
       emotionsSheet.getRange(1, 1, 1, 8).setValues([[
         'Timestamp', 'Emotion Score', 'Market Action', 'Confidence Level', 
@@ -58,7 +64,13 @@ function initializeSpreadsheet() {
       tradesSheet = ss.insertSheet(SHEET_NAME_TRADES);
     }
     
-    const tradesHeaders = tradesSheet.getRange(1, 1, 1, tradesSheet.getLastColumn()).getValues()[0];
+    // Check if sheet has any data, handle empty sheet case
+    const tradesLastCol = tradesSheet.getLastColumn();
+    let tradesHeaders = [];
+    if (tradesLastCol > 0) {
+      tradesHeaders = tradesSheet.getRange(1, 1, 1, tradesLastCol).getValues()[0];
+    }
+    
     if (tradesHeaders.length === 0 || tradesHeaders[0] === '') {
       tradesSheet.getRange(1, 1, 1, 13).setValues([[
         'Timestamp', 'Symbol', 'Trade Type', 'Entry Price', 'Exit Price', 
@@ -248,7 +260,8 @@ function getTradePerformance(days) {
     
     // Check if sheet has data
     const lastRow = sheet.getLastRow();
-    if (lastRow <= 1) {
+    const lastCol = sheet.getLastColumn();
+    if (lastRow <= 1 || lastCol <= 0) {
       Logger.log('No trade data found');
       return { trades: [], performance: null };
     }
@@ -332,7 +345,8 @@ function getRecentEmotionalData(days) {
     
     // Check if sheet has data
     const lastRow = sheet.getLastRow();
-    if (lastRow <= 1) {
+    const lastCol = sheet.getLastColumn();
+    if (lastRow <= 1 || lastCol <= 0) {
       Logger.log('No emotional data found in sheet');
       return [];
     }
