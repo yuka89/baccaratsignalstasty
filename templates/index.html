@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Baccarat Predictor Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 2px solid #ecf0f1;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .prediction-display {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .prediction-display h4 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+            transition: width 0.5s ease;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .result-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .hand-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .hand-cards {
+            font-family: monospace;
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        .winner {
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #27ae60;
+        }
+
+        .recent-results {
+            display: flex;
+            gap: 5px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .result-chip {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .result-chip.banker {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .result-chip.player {
+            background: #3498db;
+            color: white;
+        }
+
+        .result-chip.tie {
+            background: #f39c12;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .auto-play-results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .auto-hand {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .auto-hand.correct {
+            border-left-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .auto-hand.incorrect {
+            border-left-color: #e74c3c;
+            background: #ffeaa7;
+        }
+
+        .betting-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .betting-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .betting-controls select,
+        .betting-controls input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎰 Baccarat Predictor Pro</h1>
+            <p>Advanced AI-powered baccarat analysis and prediction system</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Prediction Panel -->
+            <div class="card">
+                <h3>🎯 Prediction Engine</h3>
+                <div id="predictionDisplay" class="prediction-display">
+                    <h4>Get Prediction</h4>
+                    <p>Click "Get Prediction" to analyze the current situation</p>
+                </div>
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="getPrediction()">Get Prediction</button>
+                    <button class="btn btn-success" onclick="dealHand()">Deal Hand</button>
+                    <button class="btn btn-warning" onclick="autoPlay(3)">Auto Play 3</button>
+                    <button class="btn btn-danger" onclick="newShoe()">New Shoe</button>
+                </div>
+                
+                <div id="resultDisplay" class="result-display" style="display: none;">
+                    <!-- Hand results will appear here -->
+                </div>
+            </div>
+
+            <!-- Statistics Panel -->
+            <div class="card">
+                <h3>📊 Session Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div id="handsPlayed" class="stat-value">0</div>
+                        <div class="stat-label">Hands Played</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="accuracy" class="stat-value">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="bankerWins" class="stat-value">0</div>
+                        <div class="stat-label">Banker Wins</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="playerWins" class="stat-value">0</div>
+                        <div class="stat-label">Player Wins</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="ties" class="stat-value">0</div>
+                        <div class="stat-label">Ties</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="shoePenetration" class="stat-value">0%</div>
+                        <div class="stat-label">Shoe Used</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4>Recent Results</h4>
+                    <div id="recentResults" class="recent-results">
+                        <!-- Recent results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Betting Strategy Panel -->
+        <div class="card">
+            <h3>💰 Betting Strategy</h3>
+            <div class="betting-section">
+                <div class="betting-controls">
+                    <label>Strategy:</label>
+                    <select id="bettingStrategy">
+                        <option value="flat">Flat Betting</option>
+                        <option value="martingale">Martingale</option>
+                        <option value="fibonacci">Fibonacci</option>
+                        <option value="labouchere">Labouchere</option>
+                        <option value="paroli">Paroli</option>
+                    </select>
+                    
+                    <label>Base Unit:</label>
+                    <input type="number" id="baseUnit" value="10" min="1">
+                    
+                    <label>Max Bet:</label>
+                    <input type="number" id="maxBet" value="100" min="1">
+                    
+                    <button class="btn btn-primary" onclick="getBettingRecommendation()">Get Bet Size</button>
+                </div>
+                
+                <div id="bettingRecommendation" style="margin-top: 15px;">
+                    <p>Recommended bet size will appear here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Play Results -->
+        <div class="card" id="autoPlayCard" style="display: none;">
+            <h3>🤖 Auto Play Results</h3>
+            <div id="autoPlayResults" class="auto-play-results">
+                <!-- Auto play results will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPrediction = null;
+        let lastResult = null;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            newShoe();
+        });
+
+        async function getPrediction() {
+            try {
+                const response = await fetch('/api/get_prediction');
+                const data = await response.json();
+                
+                const basic = data.basic_prediction;
+                const advanced = data.advanced_prediction;
+                
+                currentPrediction = basic;
+                
+                const predictionHtml = `
+                    <h4>🎯 ${basic.prediction}</h4>
+                    <p>Confidence: ${basic.confidence}%</p>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${basic.confidence}%"></div>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.9em;">${basic.reasoning}</p>
+                    <p><strong>Strategy:</strong> ${basic.strategy}</p>
+                    ${advanced ? `<p><strong>Advanced:</strong> ${advanced.prediction} (${advanced.confidence}%)</p>` : ''}
+                `;
+                
+                document.getElementById('predictionDisplay').innerHTML = predictionHtml;
+                updateStats();
+            } catch (error) {
+                console.error('Error getting prediction:', error);
+                alert('Error getting prediction. Please try again.');
+            }
+        }
+
+        async function dealHand() {
+            try {
+                const response = await fetch('/api/deal_hand', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const result = data.result;
+                    lastResult = result;
+                    
+                    const resultHtml = `
+                        <h4>🎲 Hand Result</h4>
+                        <div class="hand-result">
+                            <div>
+                                <strong>Player:</strong> 
+                                <span class="hand-cards">${result.player_cards.join(', ')}</span>
+                                <span>(${result.player_value})</span>
+                            </div>
+                        </div>
+                        <div class="hand-result">
+                            <div>
+                                <strong>Banker:</strong> 
+                                <span class="hand-cards">${result.banker_cards.join(', ')}</span>
+                                <span>(${result.banker_value})</span>
+                            </div>
+                        </div>
+                        <div class="winner">🏆 Winner: ${result.winner}</div>
+                        
+                        ${currentPrediction ? `
+                            <div style="margin-top: 15px;">
+                                <p><strong>Your Prediction:</strong> ${currentPrediction.prediction}</p>
+                                <p><strong>Result:</strong> ${currentPrediction.prediction === result.winner ? '✅ Correct!' : '❌ Incorrect'}</p>
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    document.getElementById('resultDisplay').innerHTML = resultHtml;
+                    document.getElementById('resultDisplay').style.display = 'block';
+                    
+                    // Record prediction if one was made
+                    if (currentPrediction) {
+                        await recordPrediction(currentPrediction.prediction, result.winner);
+                    }
+                    
+                    updateStats();
+                } else {
+                    alert(data.message || 'Error dealing hand');
+                }
+            } catch (error) {
+                console.error('Error dealing hand:', error);
+                alert('Error dealing hand. Please try again.');
+            }
+        }
+
+        async function recordPrediction(prediction, actual) {
+            try {
+                await fetch('/api/record_prediction', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prediction, actual})
+                });
+            } catch (error) {
+                console.error('Error recording prediction:', error);
+            }
+        }
+
+        async function autoPlay(numHands) {
+            try {
+                document.getElementById('autoPlayCard').style.display = 'block';
+                document.getElementById('autoPlayResults').innerHTML = '<div class="loading">🔄 Playing hands...</div>';
+                
+                const response = await fetch('/api/auto_play', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({num_hands: numHands})
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let resultsHtml = '';
+                    let correctCount = 0;
+                    
+                    data.results.forEach(hand => {
+                        const correctClass = hand.correct ? 'correct' : 'incorrect';
+                        const correctIcon = hand.correct ? '✅' : '❌';
+                        
+                        if (hand.correct) correctCount++;
+                        
+                        resultsHtml += `
+                            <div class="auto-hand ${correctClass}">
+                                <div>
+                                    <strong>Hand ${hand.hand_number}:</strong> 
+                                    Predicted ${hand.prediction.prediction} (${hand.prediction.confidence}%)
+                                </div>
+                                <div>
+                                    <strong>Result:</strong> ${hand.result.winner} 
+                                    (P:${hand.result.player_value}, B:${hand.result.banker_value}) 
+                                    ${correctIcon}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsHtml += `
+                        <div style="text-align: center; margin-top: 20px; padding: 15px; background: #3498db; color: white; border-radius: 10px;">
+                            <strong>Auto Play Summary:</strong> ${correctCount}/${data.results.length} correct 
+                            (${Math.round(correctCount/data.results.length*100)}%)
+                        </div>
+                    `;
+                    
+                    document.getElementById('autoPlayResults').innerHTML = resultsHtml;
+                    updateStats();
+                } else {
+                    alert('Error during auto play');
+                }
+            } catch (error) {
+                console.error('Error during auto play:', error);
+                alert('Error during auto play. Please try again.');
+            }
+        }
+
+        async function newShoe() {
+            try {
+                const response = await fetch('/api/new_shoe', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('predictionDisplay').innerHTML = `
+                        <h4>🔄 New Shoe Started</h4>
+                        <p>Fresh 8-deck shoe ready for analysis</p>
+                        <p>Cards remaining: ${data.cards_remaining}</p>
+                    `;
+                    
+                    document.getElementById('resultDisplay').style.display = 'none';
+                    document.getElementById('autoPlayCard').style.display = 'none';
+                    
+                    currentPrediction = null;
+                    lastResult = null;
+                    
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Error starting new shoe:', error);
+                alert('Error starting new shoe. Please try again.');
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/get_stats');
+                const data = await response.json();
+                
+                const stats = data.stats;
+                
+                document.getElementById('handsPlayed').textContent = stats.hands_played;
+                document.getElementById('accuracy').textContent = stats.accuracy.toFixed(1) + '%';
+                document.getElementById('bankerWins').textContent = stats.banker_wins;
+                document.getElementById('playerWins').textContent = stats.player_wins;
+                document.getElementById('ties').textContent = stats.ties;
+                document.getElementById('shoePenetration').textContent = stats.shoe_penetration.toFixed(1) + '%';
+                
+                // Update recent results
+                const recentResultsHtml = data.recent_results.map(result => 
+                    `<div class="result-chip ${result.winner.toLowerCase()}">${result.winner[0]}</div>`
+                ).join('');
+                
+                document.getElementById('recentResults').innerHTML = recentResultsHtml;
+                
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        async function getBettingRecommendation() {
+            try {
+                const strategy = document.getElementById('bettingStrategy').value;
+                const baseUnit = parseFloat(document.getElementById('baseUnit').value);
+                const maxBet = parseFloat(document.getElementById('maxBet').value);
+                
+                const response = await fetch('/api/betting_recommendation', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        strategy,
+                        base_unit: baseUnit,
+                        max_bet: maxBet,
+                        last_result: lastResult ? (currentPrediction && currentPrediction.prediction === lastResult.winner ? 'win' : 'loss') : null
+                    })
+                });
+                const data = await response.json();
+                
+                document.getElementById('bettingRecommendation').innerHTML = `
+                    <p><strong>Recommended Bet:</strong> $${data.recommended_bet.toFixed(2)}</p>
+                    <p><strong>Strategy:</strong> ${data.strategy}</p>
+                `;
+                
+            } catch (error) {
+                console.error('Error getting betting recommendation:', error);
+                alert('Error getting betting recommendation. Please try again.');
+            }
+        }
+
+        // Auto-refresh stats every 30 seconds
+        setInterval(updateStats, 30000);
+    </script>
+</body>
+</html>
