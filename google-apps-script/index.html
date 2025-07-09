@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Assistant - Google Apps Script</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            padding: 20px 0;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .price-up {
+            color: var(--secondary-color);
+        }
+        
+        .price-down {
+            color: var(--danger-color);
+        }
+        
+        .chat-interface {
+            height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .message.user {
+            background: var(--primary-color);
+            color: white;
+            text-align: right;
+        }
+        
+        .message.assistant {
+            background: white;
+            border: 1px solid #dee2e6;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hero {
+            text-align: center;
+            color: white;
+            padding: 30px 0;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="container">
+            <h1><i class="fas fa-chart-line me-2"></i>AI Trading Assistant</h1>
+            <p>Simplified version for Google Apps Script</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Market Questions Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-question-circle me-2"></i>Ask Market Questions</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="chat-interface" id="chatInterface">
+                            <div class="message assistant">
+                                <strong>AI Assistant:</strong> Hello! I'm your AI trading assistant. I can help you with questions about trading, futures, NASDAQ 100, S&P 500, and market analysis. What would you like to know?
+                            </div>
+                        </div>
+                        <div class="input-group mt-3">
+                            <input type="text" class="form-control" id="questionInput" 
+                                   placeholder="Ask about futures, NASDAQ 100, S&P 500, or any trading question...">
+                            <button class="btn btn-primary" onclick="askQuestion()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <small>Quick questions:</small><br>
+                            <button class="btn btn-outline-primary btn-sm me-1 mt-1" onclick="quickQuestion('What are the top performing NASDAQ 100 stocks today?')">NASDAQ 100</button>
+                            <button class="btn btn-outline-primary btn-sm me-1 mt-1" onclick="quickQuestion('Explain futures trading basics')">Futures Basics</button>
+                            <button class="btn btn-outline-primary btn-sm me-1 mt-1" onclick="quickQuestion('What are the best S&P 500 sectors to watch?')">S&P 500 Sectors</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Data Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-chart-bar me-2"></i>Stock Price Lookup</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="symbolInput" placeholder="Enter symbol (e.g., AAPL)">
+                            <button class="btn btn-primary" onclick="getStockPrice()">Get Price</button>
+                        </div>
+                        <div id="stockData"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-signal me-2"></i>Trading Signals</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="signalSymbol" placeholder="Enter symbol for signals">
+                            <button class="btn btn-primary" onclick="getTradingSignals()">Get Signals</button>
+                        </div>
+                        <div id="tradingSignals"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Stocks Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-chart-line me-2"></i>Top NASDAQ 100</h4>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-3" onclick="loadNasdaq100()">Load NASDAQ 100 Data</button>
+                        <div id="nasdaq100Data"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-chart-area me-2"></i>Top S&P 500</h4>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-3" onclick="loadSP500()">Load S&P 500 Data</button>
+                        <div id="sp500Data"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing your request...</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function addMessage(content, isUser = false) {
+            const chatInterface = document.getElementById('chatInterface');
+            const message = document.createElement('div');
+            message.className = `message ${isUser ? 'user' : 'assistant'}`;
+            message.innerHTML = `<strong>${isUser ? 'You' : 'AI Assistant'}:</strong> ${content}`;
+            chatInterface.appendChild(message);
+            chatInterface.scrollTop = chatInterface.scrollHeight;
+        }
+        
+        // Market question functionality
+        function askQuestion() {
+            const question = document.getElementById('questionInput').value.trim();
+            if (!question) return;
+            
+            addMessage(question, true);
+            document.getElementById('questionInput').value = '';
+            
+            showLoading();
+            
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    hideLoading();
+                    addMessage(response);
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    addMessage('Error: ' + error.message);
+                })
+                .askMarketQuestion(question);
+        }
+        
+        function quickQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            askQuestion();
+        }
+        
+        // Stock price functionality
+        function getStockPrice() {
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            if (!symbol) return;
+            
+            showLoading();
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    if (data.error) {
+                        document.getElementById('stockData').innerHTML = `
+                            <div class="alert alert-danger">${data.error}</div>
+                        `;
+                    } else {
+                        const changeClass = data.change >= 0 ? 'price-up' : 'price-down';
+                        const changeIcon = data.change >= 0 ? '↑' : '↓';
+                        
+                        document.getElementById('stockData').innerHTML = `
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>${data.symbol}</h5>
+                                    <p class="mb-1"><strong>Price:</strong> $${data.price.toFixed(2)}</p>
+                                    <p class="mb-1 ${changeClass}"><strong>Change:</strong> ${changeIcon} ${Math.abs(data.change).toFixed(2)} (${data.changePercent})</p>
+                                    <p class="mb-0"><strong>Volume:</strong> ${data.volume.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    document.getElementById('stockData').innerHTML = `
+                        <div class="alert alert-danger">Error: ${error.message}</div>
+                    `;
+                })
+                .getStockPrice(symbol);
+        }
+        
+        // Trading signals functionality
+        function getTradingSignals() {
+            const symbol = document.getElementById('signalSymbol').value.trim().toUpperCase();
+            if (!symbol) return;
+            
+            showLoading();
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    if (data.error) {
+                        document.getElementById('tradingSignals').innerHTML = `
+                            <div class="alert alert-danger">${data.error}</div>
+                        `;
+                    } else {
+                        let html = `<h6>Signals for ${data.symbol}</h6>`;
+                        data.signals.forEach(signal => {
+                            const badgeClass = signal.type === 'BUY' ? 'bg-success' : signal.type === 'SELL' ? 'bg-danger' : 'bg-secondary';
+                            html += `
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <span class="badge ${badgeClass}">${signal.type}</span>
+                                        <p class="mb-1"><strong>Confidence:</strong> ${(signal.confidence * 100).toFixed(1)}%</p>
+                                        <p class="mb-1"><strong>Reasoning:</strong> ${signal.reasoning}</p>
+                                        <small>Entry: $${signal.entryPrice.toFixed(2)} | SL: $${signal.stopLoss.toFixed(2)} | TP: $${signal.takeProfit.toFixed(2)}</small>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        document.getElementById('tradingSignals').innerHTML = html;
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    document.getElementById('tradingSignals').innerHTML = `
+                        <div class="alert alert-danger">Error: ${error.message}</div>
+                    `;
+                })
+                .getTradingSignals(symbol);
+        }
+        
+        // NASDAQ 100 data
+        function loadNasdaq100() {
+            showLoading();
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    displayMarketData(data, 'nasdaq100Data');
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    document.getElementById('nasdaq100Data').innerHTML = `
+                        <div class="alert alert-danger">Error: ${error.message}</div>
+                    `;
+                })
+                .getNasdaq100Data();
+        }
+        
+        // S&P 500 data
+        function loadSP500() {
+            showLoading();
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    hideLoading();
+                    displayMarketData(data, 'sp500Data');
+                })
+                .withFailureHandler(function(error) {
+                    hideLoading();
+                    document.getElementById('sp500Data').innerHTML = `
+                        <div class="alert alert-danger">Error: ${error.message}</div>
+                    `;
+                })
+                .getSP500Data();
+        }
+        
+        function displayMarketData(data, elementId) {
+            let html = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Symbol</th><th>Price</th><th>Change</th></tr></thead><tbody>';
+            
+            data.forEach(stock => {
+                const changeClass = stock.change >= 0 ? 'price-up' : 'price-down';
+                const changeIcon = stock.change >= 0 ? '↑' : '↓';
+                
+                html += `
+                    <tr>
+                        <td><strong>${stock.symbol}</strong></td>
+                        <td>$${stock.price.toFixed(2)}</td>
+                        <td class="${changeClass}">${changeIcon} ${Math.abs(stock.change).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById(elementId).innerHTML = html;
+        }
+        
+        // Enter key support
+        document.getElementById('questionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askQuestion();
+            }
+        });
+        
+        document.getElementById('symbolInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getStockPrice();
+            }
+        });
+        
+        document.getElementById('signalSymbol').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getTradingSignals();
+            }
+        });
+    </script>
+</body>
+</html>
