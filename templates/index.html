@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Assistant - Advanced Market Analysis</title>
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js and Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link href="/static/css/style.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-bg: #1f2937;
+            --light-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #64748b;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .main-content {
+            background: var(--light-bg);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            border: none;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        .upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f8fafc;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: #f1f5f9;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--secondary-color);
+            background: #ecfdf5;
+        }
+
+        .market-ticker {
+            background: var(--dark-bg);
+            color: white;
+            padding: 10px 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            animation: scroll-left 60s linear infinite;
+        }
+
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .signal-card {
+            border-left: 4px solid var(--secondary-color);
+            margin-bottom: 15px;
+        }
+
+        .signal-buy {
+            border-left-color: var(--secondary-color);
+        }
+
+        .signal-sell {
+            border-left-color: var(--danger-color);
+        }
+
+        .price-up {
+            color: var(--secondary-color);
+        }
+
+        .price-down {
+            color: var(--danger-color);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .chat-interface {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: var(--primary-color);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background: white;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin: 20px 0;
+        }
+
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background: var(--light-bg);
+            border: none;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .table td {
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .footer {
+            background: var(--dark-bg);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .card {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>
+                AI Trading Assistant
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#upload">Chart Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#questions">Market Questions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#data">Live Data</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#signals">Trading Signals</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">AI-Powered Trading Assistant</h1>
+            <p class="hero-subtitle">
+                Upload charts, ask market questions, and get AI-powered insights on futures, NASDAQ 100, and S&P 500
+            </p>
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <div class="stats-number">24/7</div>
+                        <div class="stats-label">AI Analysis</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <div class="stats-number">500+</div>
+                        <div class="stats-label">Stocks Covered</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <div class="stats-number">Real-time</div>
+                        <div class="stats-label">Market Data</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stats-card">
+                        <div class="stats-number">Advanced</div>
+                        <div class="stats-label">AI Models</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Market Ticker -->
+    <div class="market-ticker">
+        <div class="ticker-content" id="marketTicker">
+            Loading market data...
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Chart Upload Section -->
+            <section id="upload" class="mb-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-upload me-2"></i>
+                            Upload Chart for AI Analysis
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="upload-area" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
+                                    <h5>Drag & Drop Chart Image</h5>
+                                    <p class="text-muted">Or click to select file</p>
+                                    <input type="file" id="chartFile" accept="image/*" style="display: none;">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="symbolInput" class="form-label">Stock Symbol</label>
+                                    <input type="text" class="form-control" id="symbolInput" placeholder="e.g., AAPL, TSLA, MSFT">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="questionInput" class="form-label">Your Question</label>
+                                    <textarea class="form-control" id="questionInput" rows="3" 
+                                              placeholder="What does this chart tell us about the stock's future?"></textarea>
+                                </div>
+                                <button class="btn btn-primary" id="analyzeChart">
+                                    <i class="fas fa-brain me-2"></i>
+                                    Analyze Chart
+                                </button>
+                            </div>
+                        </div>
+                        <div id="chartAnalysis" class="mt-4" style="display: none;">
+                            <div class="alert alert-info">
+                                <h5><i class="fas fa-robot me-2"></i>AI Analysis Result</h5>
+                                <div id="analysisResult"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market Questions Section -->
+            <section id="questions" class="mb-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Ask Market Questions
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="chat-interface" id="chatInterface">
+                                    <div class="message assistant">
+                                        <strong>AI Assistant:</strong> Hello! I'm your AI trading assistant. I can help you with questions about trading, futures, NASDAQ 100, S&P 500, and market analysis. What would you like to know?
+                                    </div>
+                                </div>
+                                <div class="input-group mt-3">
+                                    <input type="text" class="form-control" id="marketQuestion" 
+                                           placeholder="Ask about futures, NASDAQ 100, S&P 500, or any trading question...">
+                                    <button class="btn btn-primary" id="askQuestion">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Quick Questions:</h6>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary btn-sm quick-question" 
+                                            data-question="What are the top performing NASDAQ 100 stocks this week?">
+                                        NASDAQ 100 Performance
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm quick-question" 
+                                            data-question="Explain futures trading basics and key strategies">
+                                        Futures Trading Basics
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm quick-question" 
+                                            data-question="What are the best S&P 500 sectors to watch right now?">
+                                        S&P 500 Sectors
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm quick-question" 
+                                            data-question="How do I analyze market sentiment and volatility?">
+                                        Market Sentiment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Data Section -->
+            <section id="data" class="mb-5">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    NASDAQ 100 Live Data
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Symbol</th>
+                                                <th>Price</th>
+                                                <th>Change</th>
+                                                <th>Volume</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="nasdaq100Table">
+                                            <tr>
+                                                <td colspan="4" class="text-center">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    S&P 500 Live Data
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Symbol</th>
+                                                <th>Price</th>
+                                                <th>Change</th>
+                                                <th>Volume</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="sp500Table">
+                                            <tr>
+                                                <td colspan="4" class="text-center">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Chart Section -->
+            <section id="charts" class="mb-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-area me-2"></i>
+                            Interactive Stock Chart
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <select class="form-select" id="chartSymbol">
+                                    <option value="AAPL">Apple (AAPL)</option>
+                                    <option value="MSFT">Microsoft (MSFT)</option>
+                                    <option value="GOOGL">Google (GOOGL)</option>
+                                    <option value="AMZN">Amazon (AMZN)</option>
+                                    <option value="TSLA">Tesla (TSLA)</option>
+                                    <option value="NVDA">NVIDIA (NVDA)</option>
+                                    <option value="META">Meta (META)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select" id="chartPeriod">
+                                    <option value="1mo">1 Month</option>
+                                    <option value="3mo">3 Months</option>
+                                    <option value="6mo">6 Months</option>
+                                    <option value="1y" selected>1 Year</option>
+                                    <option value="2y">2 Years</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary" id="loadChart">
+                                    <i class="fas fa-sync me-2"></i>
+                                    Load Chart
+                                </button>
+                            </div>
+                        </div>
+                        <div id="stockChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trading Signals Section -->
+            <section id="signals" class="mb-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-signal me-2"></i>
+                            AI Trading Signals
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" id="signalSymbol" placeholder="Enter symbol (e.g., AAPL)">
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-primary" id="getSignals">
+                                    <i class="fas fa-search me-2"></i>
+                                    Get Trading Signals
+                                </button>
+                            </div>
+                        </div>
+                        <div id="tradingSignals">
+                            <div class="text-center text-muted">
+                                Enter a stock symbol to get AI-powered trading signals
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 AI Trading Assistant. Powered by advanced AI models and real-time market data.</p>
+            <p><small>Disclaimer: This is for educational purposes only. Please consult with a financial advisor before making investment decisions.</small></p>
+        </div>
+    </footer>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner"></div>
+                    <h5>Processing your request...</h5>
+                    <p class="text-muted">Please wait while our AI analyzes the data.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    
+    <script>
+        // Page load initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the application
+            initializeApp();
+            
+            // Load initial data
+            loadMarketData();
+            loadDefaultChart();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+        
+        function initializeApp() {
+            console.log('AI Trading Assistant initialized');
+            
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+        
+        function setupEventListeners() {
+            // Chart upload functionality
+            const uploadArea = document.getElementById('uploadArea');
+            const chartFile = document.getElementById('chartFile');
+            const analyzeChart = document.getElementById('analyzeChart');
+            
+            uploadArea.addEventListener('click', () => chartFile.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleDrop);
+            chartFile.addEventListener('change', handleFileSelect);
+            analyzeChart.addEventListener('click', analyzeUploadedChart);
+            
+            // Market questions functionality
+            const askQuestion = document.getElementById('askQuestion');
+            const marketQuestion = document.getElementById('marketQuestion');
+            
+            askQuestion.addEventListener('click', handleMarketQuestion);
+            marketQuestion.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleMarketQuestion();
+                }
+            });
+            
+            // Quick questions
+            document.querySelectorAll('.quick-question').forEach(button => {
+                button.addEventListener('click', function() {
+                    const question = this.dataset.question;
+                    document.getElementById('marketQuestion').value = question;
+                    handleMarketQuestion();
+                });
+            });
+            
+            // Chart functionality
+            const loadChart = document.getElementById('loadChart');
+            loadChart.addEventListener('click', loadInteractiveChart);
+            
+            // Trading signals
+            const getSignals = document.getElementById('getSignals');
+            getSignals.addEventListener('click', loadTradingSignals);
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect({ target: { files: files } });
+            }
+        }
+        
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const uploadArea = document.getElementById('uploadArea');
+                    uploadArea.innerHTML = `
+                        <img src="${e.target.result}" alt="Uploaded chart" style="max-width: 100%; max-height: 200px;">
+                        <p class="mt-2 text-success">Chart uploaded successfully!</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        async function analyzeUploadedChart() {
+            const file = document.getElementById('chartFile').files[0];
+            const symbol = document.getElementById('symbolInput').value;
+            const question = document.getElementById('questionInput').value;
+            
+            if (!file || !symbol || !question) {
+                alert('Please upload a chart, enter a symbol, and ask a question.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('symbol', symbol);
+            formData.append('question', question);
+            
+            try {
+                showLoading();
+                const response = await fetch('/upload-chart', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                hideLoading();
+                
+                if (result.success) {
+                    const analysisDiv = document.getElementById('chartAnalysis');
+                    const resultDiv = document.getElementById('analysisResult');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="mb-3">
+                            <strong>Symbol:</strong> ${result.symbol}<br>
+                            <strong>Question:</strong> ${result.question}
+                        </div>
+                        <div class="analysis-content">
+                            ${result.analysis.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                    
+                    analysisDiv.style.display = 'block';
+                    analysisDiv.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error analyzing chart: ' + result.message);
+                }
+            } catch (error) {
+                hideLoading();
+                alert('Error analyzing chart: ' + error.message);
+            }
+        }
+        
+        async function handleMarketQuestion() {
+            const question = document.getElementById('marketQuestion').value.trim();
+            if (!question) return;
+            
+            const chatInterface = document.getElementById('chatInterface');
+            
+            // Add user message
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user';
+            userMessage.innerHTML = `<strong>You:</strong> ${question}`;
+            chatInterface.appendChild(userMessage);
+            
+            // Clear input
+            document.getElementById('marketQuestion').value = '';
+            
+            // Scroll to bottom
+            chatInterface.scrollTop = chatInterface.scrollHeight;
+            
+            try {
+                const response = await fetch('/ask-question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        context: null,
+                        symbol: null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const assistantMessage = document.createElement('div');
+                    assistantMessage.className = 'message assistant';
+                    assistantMessage.innerHTML = `<strong>AI Assistant:</strong> ${result.answer.replace(/\n/g, '<br>')}`;
+                    chatInterface.appendChild(assistantMessage);
+                } else {
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'message assistant';
+                    errorMessage.innerHTML = `<strong>AI Assistant:</strong> Sorry, I encountered an error processing your question.`;
+                    chatInterface.appendChild(errorMessage);
+                }
+            } catch (error) {
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'message assistant';
+                errorMessage.innerHTML = `<strong>AI Assistant:</strong> Sorry, I encountered an error processing your question.`;
+                chatInterface.appendChild(errorMessage);
+            }
+            
+            // Scroll to bottom
+            chatInterface.scrollTop = chatInterface.scrollHeight;
+        }
+        
+        async function loadMarketData() {
+            try {
+                // Load NASDAQ 100 data
+                const nasdaq100Response = await fetch('/nasdaq100');
+                const nasdaq100Data = await nasdaq100Response.json();
+                
+                if (nasdaq100Data.success) {
+                    updateMarketTable('nasdaq100Table', nasdaq100Data.data);
+                    updateMarketTicker(nasdaq100Data.data);
+                }
+                
+                // Load S&P 500 data
+                const sp500Response = await fetch('/sp500');
+                const sp500Data = await sp500Response.json();
+                
+                if (sp500Data.success) {
+                    updateMarketTable('sp500Table', sp500Data.data);
+                }
+            } catch (error) {
+                console.error('Error loading market data:', error);
+            }
+        }
+        
+        function updateMarketTable(tableId, data) {
+            const tbody = document.getElementById(tableId);
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                const changeClass = item.change >= 0 ? 'price-up' : 'price-down';
+                const changeIcon = item.change >= 0 ? '↑' : '↓';
+                
+                row.innerHTML = `
+                    <td><strong>${item.symbol}</strong></td>
+                    <td>$${item.price.toFixed(2)}</td>
+                    <td class="${changeClass}">
+                        ${changeIcon} ${Math.abs(item.change).toFixed(2)}
+                    </td>
+                    <td>${item.volume.toLocaleString()}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateMarketTicker(data) {
+            const ticker = document.getElementById('marketTicker');
+            const tickerContent = data.map(item => {
+                const changeClass = item.change >= 0 ? 'price-up' : 'price-down';
+                const changeIcon = item.change >= 0 ? '↑' : '↓';
+                return `${item.symbol}: $${item.price.toFixed(2)} ${changeIcon}${Math.abs(item.change).toFixed(2)}`;
+            }).join(' | ');
+            
+            ticker.innerHTML = tickerContent;
+        }
+        
+        async function loadDefaultChart() {
+            await loadInteractiveChart();
+        }
+        
+        async function loadInteractiveChart() {
+            const symbol = document.getElementById('chartSymbol').value;
+            const period = document.getElementById('chartPeriod').value;
+            
+            try {
+                const response = await fetch(`/chart/${symbol}?period=${period}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const chartData = JSON.parse(result.chart);
+                    Plotly.newPlot('stockChart', chartData.data, chartData.layout, {
+                        responsive: true,
+                        displayModeBar: true
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading chart:', error);
+            }
+        }
+        
+        async function loadTradingSignals() {
+            const symbol = document.getElementById('signalSymbol').value.trim();
+            if (!symbol) {
+                alert('Please enter a stock symbol');
+                return;
+            }
+            
+            try {
+                showLoading();
+                const response = await fetch(`/trading-signals/${symbol}`);
+                const result = await response.json();
+                hideLoading();
+                
+                if (result.success) {
+                    const signalsDiv = document.getElementById('tradingSignals');
+                    
+                    if (result.signals.length === 0) {
+                        signalsDiv.innerHTML = '<div class="text-center text-muted">No trading signals available for this symbol.</div>';
+                        return;
+                    }
+                    
+                    signalsDiv.innerHTML = result.signals.map(signal => `
+                        <div class="signal-card card mb-3 signal-${signal.signal_type.toLowerCase()}">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <h5 class="card-title">
+                                            <span class="badge ${signal.signal_type === 'BUY' ? 'bg-success' : 'bg-danger'}">
+                                                ${signal.signal_type}
+                                            </span>
+                                        </h5>
+                                        <p class="card-text">
+                                            <strong>Confidence:</strong> ${(signal.confidence * 100).toFixed(1)}%
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="card-text">
+                                            <strong>Reasoning:</strong> ${signal.reasoning}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <p class="card-text">
+                                            <strong>Entry:</strong> $${signal.entry_price.toFixed(2)}<br>
+                                            <strong>Stop Loss:</strong> $${signal.stop_loss.toFixed(2)}<br>
+                                            <strong>Take Profit:</strong> $${signal.take_profit.toFixed(2)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    alert('Error loading trading signals');
+                }
+            } catch (error) {
+                hideLoading();
+                alert('Error loading trading signals: ' + error.message);
+            }
+        }
+        
+        function showLoading() {
+            const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            modal.show();
+        }
+        
+        function hideLoading() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+            if (modal) {
+                modal.hide();
+            }
+        }
+        
+        // Auto-refresh market data every 30 seconds
+        setInterval(loadMarketData, 30000);
+    </script>
+</body>
+</html>
